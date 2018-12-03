@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers.Text;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -17,6 +18,7 @@ namespace Day_03
 
 		    var claimsById = input.Select(ParseClaim).ToDictionary(t => t.id, t => t.claim);
 		    var claims = claimsById.Values.ToList();
+		    var allIds = new HashSet<int>(claimsById.Keys);
 
 
             var maxX = claims.Max(c => c.Right);
@@ -27,16 +29,25 @@ namespace Day_03
 		    {
 		        for (int y = 0; y < maxY; y++)
 		        {
-		            if (claims.Count(claim => claim.Contains(x, y)) > 1)
+		            var intersection = claimsById.Where(claim => claim.Value.Contains(x, y)).ToArray();
+
+                    if (intersection.Length > 1)
 		            {
                         // Intersection !
 		                intersectionArea++;
-
-		            }
+		                foreach (var intersectingClaim in intersection)
+		                {
+		                    allIds.Remove(intersectingClaim.Key);
+		                }
+                    }
 		        }
 		    }
 
 		    Console.WriteLine(intersectionArea);
+		    foreach (var remaining in allIds)
+		    {
+		        Console.WriteLine($"Non-intersecting: #{remaining}");
+		    }
             Console.ReadLine();
 		}
 
