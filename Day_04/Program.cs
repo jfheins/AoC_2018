@@ -17,46 +17,21 @@ namespace Day_04
             var input = File.ReadAllLines(@"../../../input.txt");
 
             var records = ProcessActions(input.Select(ParseLine)).ToList();
-            var activityPerDay = records.GroupBy(r => r.DateTime.DayOfYear).Select(GuardActionsToStatus).ToList();
+            var activityPerGuard = records.GroupBy(r => r.Number).Select(GuardActionsToStatus).ToList();
 
-            List<(int guard, int sum)> part1 = activityPerDay.GroupBy(f => f.Number)
-                .Select(group =>
-                (guard: @group.Key, sum: @group
-                    .Sum(status => status.AsleepMinutes.Count))).ToList();
+            var mostTiredGuard = activityPerGuard.MaxBy(s => s.AsleepMinutes.Values.Sum()).First();
+            var mostSleptMinute = mostTiredGuard.AsleepMinutes.MaxBy(kvp => kvp.Value).First().Key;
 
-            var (mostTiredGuard, sleepingMinutes) = part1.MaxBy(x => x.sum).Single();
-            Console.WriteLine($"{mostTiredGuard} sleeps {sleepingMinutes} min.");
-
-            var mostSleptMinute = activityPerDay.Where(g => g.Number == mostTiredGuard)
-                .SelectMany(g => g.AsleepMinutes)
-                .GroupBy(x => x)
-                .OrderByDescending(gr => gr.Count())
-                .First().Key;
-
+            Console.WriteLine($"Guard #{mostTiredGuard.Number} sleeps the most.");
             Console.WriteLine($"Most slept minute: {mostSleptMinute}");
-            Console.WriteLine($"Part 1 answer: {mostSleptMinute * mostTiredGuard}");
+            Console.WriteLine($"Part 1 answer: {mostSleptMinute * mostTiredGuard.Number}");
 
-            var actionPerGuard = activityPerDay.ToLookup(s => s.Number);
-            var maxOccurence = 0;
-            var sleepyGuard = 0;
-            mostSleptMinute = 0;
-            foreach (var guardActions in actionPerGuard)
-            {
-                var mostFrequentGroup = guardActions
-                    .SelectMany(s => s.AsleepMinutes)
-                    .GroupBy(x => x)
-                    .OrderByDescending(gr => gr.Count())
-                    .First();
-                if (mostFrequentGroup.Count() > maxOccurence)
-                {
-                    maxOccurence = mostFrequentGroup.Count();
-                    sleepyGuard = guardActions.Key;
-                    mostSleptMinute = mostFrequentGroup.Key;
-                }
-            }
+            // Different Strategy!
+            mostTiredGuard = activityPerGuard.MaxBy(activity => activity.AsleepMinutes.Values.Max()).First();
+            mostSleptMinute = mostTiredGuard.AsleepMinutes.MaxBy(kvp => kvp.Value).First().Key;
 
-            Console.WriteLine($"Guard {sleepyGuard} sleeps often in minute {mostSleptMinute}. ({maxOccurence} times)");
-            Console.WriteLine($"Part 2 answer: {mostSleptMinute * sleepyGuard}");
+            Console.WriteLine($"Guard #{mostTiredGuard.Number} sleeps often in minute {mostSleptMinute}.");
+            Console.WriteLine($"Part 2 answer: {mostSleptMinute * mostTiredGuard.Number}");
 
             Console.ReadLine();
         }
@@ -96,23 +71,27 @@ namespace Day_04
                 }
         }
 
-        private static GuardStatus GuardActionsToStatus(IEnumerable<GuardAction> actionsInDay)
+        // Receives a number of action for one guard
+        private static GuardStatus GuardActionsToStatus(IGrouping<int, GuardAction> actionsOfGuard)
         {
-            var sleepingMinutes = new List<int>();
-            var actions = actionsInDay.ToLookup(a => a.Minute);
-            var isAsleep = false;
+            var sleepingMinutes = Enumerable.Range(0, 60).ToDictionary(x => x, x => 0);
 
-            for (var i = 0; i < 60; i++)
+            var actions = actionsOfGuard.ToLookup(a => a.DateTime.DayOfYear);
+            foreach (var day in actions)
             {
-                if (actions[i].Any())
-                    isAsleep = actions[i].First().Consciousness == GuardConsciousness.FallsAsleep;
+                var isAsleep = false;
+                var todayActions = day.ToLookup(a => a.Minute);
+                for (var i = 0; i < 60; i++)
+                {
+                    if (todayActions[i].Any())
+                        isAsleep = todayActions[i].First().Consciousness == GuardConsciousness.FallsAsleep;
 
-                if (isAsleep)
-                    sleepingMinutes.Add(i);
+                    if (isAsleep)
+                        sleepingMinutes[i]++;
+                }
             }
 
-            var firstAction = actionsInDay.First();
-            return new GuardStatus(firstAction.Number, firstAction.DateTime.Date, sleepingMinutes);
+            return new GuardStatus(actionsOfGuard.Key, sleepingMinutes);
         }
     }
 
@@ -124,15 +103,16 @@ namespace Day_04
 
     public struct GuardStatus
     {
-        public DateTime Date { get; }
         public int Number { get; }
-        public HashSet<int> AsleepMinutes { get; }
+        /// <summary>
+        /// Maps the minute of the day to the number of days this guard sleeps
+        /// </summary>
+        public Dictionary<int, int> AsleepMinutes { get; }
 
-        public GuardStatus(int number, DateTime date, IEnumerable<int> asleepMinutes)
+        public GuardStatus(int number, Dictionary<int, int> asleepMinutes)
         {
             Number = number;
-            Date = date;
-            AsleepMinutes = new HashSet<int>(asleepMinutes);
+            AsleepMinutes = asleepMinutes;
         }
     }
 
