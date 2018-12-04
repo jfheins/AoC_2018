@@ -16,7 +16,8 @@ namespace Day_04
 
             var input = File.ReadAllLines(@"../../../example.txt");
 
-            var records = input.Select(ParseLine).ToList();
+            var records = ProcessActions(input.Select(ParseLine)).ToList();
+
 
             Console.WriteLine(records[1]);
 
@@ -29,7 +30,7 @@ namespace Day_04
         {
             // [1518-06-07 00:03] Guard #2789 begins shift
             var regex = new Regex(@"\[([\d- :]+)\] (.+)");
-            
+
             var groups = regex.Match(line).Groups;
             Debug.Assert(groups.Count == 3);
             var date = DateTime.Parse(groups[1].Value);
@@ -40,42 +41,43 @@ namespace Day_04
             IEnumerable<(DateTime time, string action)> records)
         {
             var ordered = records.OrderBy(x => x.time);
-            int guardNumber = -1;
+            var guardNumber = -1;
             // Guard #99 begins shift
             var guardregex = new Regex(@"Guard #(\d+) begins shift");
 
             foreach (var tuple in ordered)
-            {
                 if (tuple.action == "falls asleep")
                 {
-                    yield return new GuardAction(guardNumber, tuple.time, GuardConsciousness.FallsAsleep);
+                    yield return new GuardAction(guardNumber, tuple.time.Minute, GuardConsciousness.FallsAsleep);
                 }
                 else if (tuple.action == "wakes up")
                 {
-                    yield return new GuardAction(guardNumber, tuple.time, GuardConsciousness.FallsAsleep);
-
-                } else if(guardregex.IsMatch(tuple.action))
+                    yield return new GuardAction(guardNumber, tuple.time.Minute, GuardConsciousness.FallsAsleep);
+                }
+                else if (guardregex.IsMatch(tuple.action))
                 {
                     var number = guardregex.Match(tuple.action).Groups[1].Value;
                     guardNumber = int.Parse(number);
                 }
-            }
         }
     }
 
     public enum GuardConsciousness
-    { FallsAsleep, WakesUp }
+    {
+        FallsAsleep,
+        WakesUp
+    }
 
     public struct GuardAction
     {
-        public GuardConsciousness Consciousness { get; set; }
-        public DateTime DateTime { get; set; }
-        public int Number { get; set; }
+        public GuardConsciousness Consciousness { get; }
+        public int Minute { get; }
+        public int Number { get; }
 
-        public GuardAction(int number, DateTime dateTime, GuardConsciousness consciousness)
+        public GuardAction(int number, int min, GuardConsciousness consciousness)
         {
             Number = number;
-            DateTime = dateTime;
+            Minute = min;
             Consciousness = consciousness;
         }
     }
