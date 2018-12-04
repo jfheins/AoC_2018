@@ -13,17 +13,13 @@ namespace Day_04
     {
         public static void Main(string[] args)
         {
-            var sw = new Stopwatch();
-            sw.Start();
 
             var input = File.ReadAllLines(@"../../../input.txt");
 
             var records = ProcessActions(input.Select(ParseLine)).ToList();
-            var years = records.Select(r => r.DateTime.Year).Distinct().ToArray();
             var field = records.GroupBy(r => r.DateTime.DayOfYear).Select(GuardActionsToStatus).ToList();
 
-            List<(int guard, int sum)> part1;
-            part1 = field.GroupBy(f => f.Number).Select(group =>
+            List<(int guard, int sum)> part1 = field.GroupBy(f => f.Number).Select(group =>
                 (guard: @group.Key, sum: @group
                     .Sum(status => status.AsleepMinutes.Count))).ToList();
 
@@ -39,9 +35,8 @@ namespace Day_04
             Console.WriteLine($"Most slept minute: {mostSleptMinute}");
             Console.WriteLine($"Part 1 answer: {mostSleptMinute * mostTiredGuard}"); // 42595 is too low
 
-            sw.Stop();
-            Console.WriteLine();
-            Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms.");
+
+            
             Console.ReadLine();
         }
 
