@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text.RegularExpressions;
+using MoreLinq;
 
 namespace Day_04
 {
@@ -19,13 +20,27 @@ namespace Day_04
 
             var records = ProcessActions(input.Select(ParseLine)).ToList();
             var years = records.Select(r => r.DateTime.Year).Distinct().ToArray();
-            var field = records.GroupBy(r => r.DateTime.DayOfYear).Select(GuardActionsToLine).ToList();
+            var field = records.GroupBy(r => r.DateTime.DayOfYear).Select(GuardActionsToStatus).ToList();
 
+            List<(int guard, int sum)> part1;
+            part1 = field.GroupBy(f => f.Number).Select(group =>
+                (guard: @group.Key, sum: @group
+                    .Sum(status => status.AsleepMinutes.Count))).ToList();
 
+            var (mostTiredGuard, sleepingMinutes) = part1.MaxBy(x => x.sum).Single();
+            Console.WriteLine($"{mostTiredGuard} sleeps {sleepingMinutes} min.");
 
-            Console.WriteLine(records[1]);
+            var mostSleptMinute = field.Where(g => g.Number == mostTiredGuard)
+                .SelectMany(g => g.AsleepMinutes)
+                .GroupBy(x => x)
+                .OrderByDescending(gr => gr.Count())
+                .First().Key;
+
+            Console.WriteLine($"Most slept minute: {mostSleptMinute}");
+            Console.WriteLine($"Part 1 answer: {mostSleptMinute * mostTiredGuard}"); // 42595 is too low
 
             sw.Stop();
+            Console.WriteLine();
             Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms.");
             Console.ReadLine();
         }
@@ -56,7 +71,7 @@ namespace Day_04
                 }
                 else if (tuple.action == "wakes up")
                 {
-                    yield return new GuardAction(guardNumber, tuple.time, GuardConsciousness.FallsAsleep);
+                    yield return new GuardAction(guardNumber, tuple.time, GuardConsciousness.WakesUp);
                 }
                 else if (guardregex.IsMatch(tuple.action))
                 {
@@ -65,21 +80,23 @@ namespace Day_04
                 }
         }
 
-        private static string GuardActionsToLine(IEnumerable<GuardAction> actionsInDay)
+        private static GuardStatus GuardActionsToStatus(IEnumerable<GuardAction> actionsInDay)
         {
-            var arr = new string('?', 60).ToCharArray();
+            var sleepingMinutes = new List<int>();
             var actions = actionsInDay.ToLookup(a => a.Minute);
-            var signal = '.';
+            var isAsleep = false;
 
-            for (int i = 0; i < 60; i++)
+            for (var i = 0; i < 60; i++)
             {
                 if (actions[i].Any())
-                    signal = actions[i].First().Consciousness == GuardConsciousness.FallsAsleep ? '#' : '.';
-                
-                arr[i] = signal;
+                    isAsleep = actions[i].First().Consciousness == GuardConsciousness.FallsAsleep;
+
+                if (isAsleep)
+                    sleepingMinutes.Add(i);
             }
 
-            return string.Concat(arr);
+            var firstAction = actionsInDay.First();
+            return new GuardStatus(firstAction.Number, firstAction.DateTime.Date, sleepingMinutes);
         }
     }
 
@@ -89,12 +106,26 @@ namespace Day_04
         WakesUp
     }
 
+    public struct GuardStatus
+    {
+        public DateTime Date { get; }
+        public int Number { get; }
+        public HashSet<int> AsleepMinutes { get; }
+
+        public GuardStatus(int number, DateTime date, IEnumerable<int> asleepMinutes)
+        {
+            Number = number;
+            Date = date;
+            AsleepMinutes = new HashSet<int>(asleepMinutes);
+        }
+    }
+
     public struct GuardAction
     {
-        public GuardConsciousness Consciousness { get; }
         public int Minute { get; }
         public DateTime DateTime { get; }
         public int Number { get; }
+        public GuardConsciousness Consciousness { get; }
 
         public GuardAction(int number, DateTime time, GuardConsciousness consciousness)
         {
@@ -102,6 +133,11 @@ namespace Day_04
             DateTime = time;
             Minute = time.Minute;
             Consciousness = consciousness;
+        }
+
+        public override string ToString()
+        {
+            return $"Guard #{Number} on {DateTime} does {Consciousness}";
         }
     }
 }
