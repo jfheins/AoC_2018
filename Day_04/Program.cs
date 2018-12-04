@@ -17,26 +17,47 @@ namespace Day_04
             var input = File.ReadAllLines(@"../../../input.txt");
 
             var records = ProcessActions(input.Select(ParseLine)).ToList();
-            var field = records.GroupBy(r => r.DateTime.DayOfYear).Select(GuardActionsToStatus).ToList();
+            var activityPerDay = records.GroupBy(r => r.DateTime.DayOfYear).Select(GuardActionsToStatus).ToList();
 
-            List<(int guard, int sum)> part1 = field.GroupBy(f => f.Number).Select(group =>
+            List<(int guard, int sum)> part1 = activityPerDay.GroupBy(f => f.Number)
+                .Select(group =>
                 (guard: @group.Key, sum: @group
                     .Sum(status => status.AsleepMinutes.Count))).ToList();
 
             var (mostTiredGuard, sleepingMinutes) = part1.MaxBy(x => x.sum).Single();
             Console.WriteLine($"{mostTiredGuard} sleeps {sleepingMinutes} min.");
 
-            var mostSleptMinute = field.Where(g => g.Number == mostTiredGuard)
+            var mostSleptMinute = activityPerDay.Where(g => g.Number == mostTiredGuard)
                 .SelectMany(g => g.AsleepMinutes)
                 .GroupBy(x => x)
                 .OrderByDescending(gr => gr.Count())
                 .First().Key;
 
             Console.WriteLine($"Most slept minute: {mostSleptMinute}");
-            Console.WriteLine($"Part 1 answer: {mostSleptMinute * mostTiredGuard}"); // 42595 is too low
+            Console.WriteLine($"Part 1 answer: {mostSleptMinute * mostTiredGuard}");
 
+            var actionPerGuard = activityPerDay.ToLookup(s => s.Number);
+            var maxOccurence = 0;
+            var sleepyGuard = 0;
+            mostSleptMinute = 0;
+            foreach (var guardActions in actionPerGuard)
+            {
+                var mostFrequentGroup = guardActions
+                    .SelectMany(s => s.AsleepMinutes)
+                    .GroupBy(x => x)
+                    .OrderByDescending(gr => gr.Count())
+                    .First();
+                if (mostFrequentGroup.Count() > maxOccurence)
+                {
+                    maxOccurence = mostFrequentGroup.Count();
+                    sleepyGuard = guardActions.Key;
+                    mostSleptMinute = mostFrequentGroup.Key;
+                }
+            }
 
-            
+            Console.WriteLine($"Guard {sleepyGuard} sleeps often in minute {mostSleptMinute}. ({maxOccurence} times)");
+            Console.WriteLine($"Part 2 answer: {mostSleptMinute * sleepyGuard}");
+
             Console.ReadLine();
         }
 
