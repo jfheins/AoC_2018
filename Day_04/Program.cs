@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text.RegularExpressions;
 
 namespace Day_04
@@ -14,9 +15,12 @@ namespace Day_04
             var sw = new Stopwatch();
             sw.Start();
 
-            var input = File.ReadAllLines(@"../../../example.txt");
+            var input = File.ReadAllLines(@"../../../input.txt");
 
             var records = ProcessActions(input.Select(ParseLine)).ToList();
+            var years = records.Select(r => r.DateTime.Year).Distinct().ToArray();
+            var field = records.GroupBy(r => r.DateTime.DayOfYear).Select(GuardActionsToLine).ToList();
+
 
 
             Console.WriteLine(records[1]);
@@ -48,17 +52,34 @@ namespace Day_04
             foreach (var tuple in ordered)
                 if (tuple.action == "falls asleep")
                 {
-                    yield return new GuardAction(guardNumber, tuple.time.Minute, GuardConsciousness.FallsAsleep);
+                    yield return new GuardAction(guardNumber, tuple.time, GuardConsciousness.FallsAsleep);
                 }
                 else if (tuple.action == "wakes up")
                 {
-                    yield return new GuardAction(guardNumber, tuple.time.Minute, GuardConsciousness.FallsAsleep);
+                    yield return new GuardAction(guardNumber, tuple.time, GuardConsciousness.FallsAsleep);
                 }
                 else if (guardregex.IsMatch(tuple.action))
                 {
                     var number = guardregex.Match(tuple.action).Groups[1].Value;
                     guardNumber = int.Parse(number);
                 }
+        }
+
+        private static string GuardActionsToLine(IEnumerable<GuardAction> actionsInDay)
+        {
+            var arr = new string('?', 60).ToCharArray();
+            var actions = actionsInDay.ToLookup(a => a.Minute);
+            var signal = '.';
+
+            for (int i = 0; i < 60; i++)
+            {
+                if (actions[i].Any())
+                    signal = actions[i].First().Consciousness == GuardConsciousness.FallsAsleep ? '#' : '.';
+                
+                arr[i] = signal;
+            }
+
+            return string.Concat(arr);
         }
     }
 
@@ -72,12 +93,14 @@ namespace Day_04
     {
         public GuardConsciousness Consciousness { get; }
         public int Minute { get; }
+        public DateTime DateTime { get; }
         public int Number { get; }
 
-        public GuardAction(int number, int min, GuardConsciousness consciousness)
+        public GuardAction(int number, DateTime time, GuardConsciousness consciousness)
         {
             Number = number;
-            Minute = min;
+            DateTime = time;
+            Minute = time.Minute;
             Consciousness = consciousness;
         }
     }
