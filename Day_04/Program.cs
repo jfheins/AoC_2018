@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using System.Text.RegularExpressions;
 using MoreLinq;
 
@@ -13,7 +12,6 @@ namespace Day_04
     {
         public static void Main(string[] args)
         {
-
             var input = File.ReadAllLines(@"../../../input.txt");
 
             var records = ProcessActions(input.Select(ParseLine)).ToList();
@@ -104,8 +102,9 @@ namespace Day_04
     public struct GuardStatus
     {
         public int Number { get; }
+
         /// <summary>
-        /// Maps the minute of the day to the number of days this guard sleeps
+        ///     Maps the minute of the day to the number of days this guard sleeps
         /// </summary>
         public Dictionary<int, int> AsleepMinutes { get; }
 
