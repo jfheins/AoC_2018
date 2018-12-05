@@ -10,15 +10,17 @@ namespace Day_05
         private static void Main(string[] args)
         {
             var input = File.ReadAllText(@"../../../input.txt").Trim();
-            input = "dabAcCaCBAcCcaDA";
+            //input = "dabAcCaCBAcCcaDA";
 
-            var result = ReduceAllPairs(input);
-            Console.WriteLine(result.Length);
+            var length = ReduceAllPairsAndMeasure(input);
+            Console.WriteLine($"Part 1 answer: {length}");
+
+
 
             Console.ReadLine();
         }
 
-        private static string ReduceAllPairs(string input)
+        private static int ReduceAllPairsAndMeasure(string input)
         {
             var output = new Stack<char>(input.Length);
             foreach (var letter in input)
@@ -28,7 +30,7 @@ namespace Day_05
                 else
                     output.Push(letter);
             }
-            return string.Concat(output.Reverse());
+            return output.Count;
         }
 
         private static bool DoReact(char a, char b)
