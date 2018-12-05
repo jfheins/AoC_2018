@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using MoreLinq;
@@ -12,6 +13,9 @@ namespace Day_05
         {
             var input = File.ReadAllText(@"../../../input.txt").Trim();
             //input = "dabAcCaCBAcCcaDA";
+
+            var sw = new Stopwatch();
+            sw.Start();
 
             var length = ReduceAllPairsAndMeasure(input);
             Console.WriteLine($"Part 1 answer: {length}");
@@ -27,6 +31,9 @@ namespace Day_05
 
             var victimUnit = lengthWithoutUnit.MinBy(kvp => kvp.Value).First();
             Console.WriteLine($"Part 2: Remove {victimUnit.Key} to reduce to {victimUnit.Value}");
+
+            sw.Stop();
+            Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms.");
 
             Console.ReadLine();
         }

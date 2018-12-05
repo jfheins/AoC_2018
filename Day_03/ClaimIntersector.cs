@@ -25,23 +25,24 @@ namespace Day_03
 
         public int GetIntersectionArea()
         {
-            var maxX = Claims.Max(c => c.Area.Right);
-            var maxY = Claims.Max(c => c.Area.Bottom);
-            int intersectionArea = 0;
-            for (int x = 0; x < maxX; x++)
-            {
-                for (int y = 0; y < maxY; y++)
-                {
-                    var intersection = Claims.Where(claim => claim.Area.Contains(x, y)).ToArray();
+            var width = Claims.Max(c => c.Area.Right);
 
-                    if (intersection.Length > 1)
-                    {
-                        intersectionArea++;
-                    }
-                }
+            var stripes = Enumerable.Range(0, width + 1).ToDictionary(x => x, x => new List<Claim>());
+
+            foreach (var claim in Claims)
+            {
+                var intersectStripes = Enumerable.Range(claim.Area.Left, claim.Area.Width);
+                foreach (var intersected in intersectStripes)
+                    stripes[intersected].Add(claim);
             }
 
-            return intersectionArea;
+            // Count only y values that occur at least twice (=> no distinct)
+            var count = stripes.AsParallel().Select(s =>
+                s.Value.SelectMany(claim => Enumerable.Range(claim.Area.Bottom, claim.Area.Height)).Distinct().Count());
+
+            
+
+            return count.ToList().Sum();
         }
 
         public IEnumerable<int> GetNonIntersectingClaims()
