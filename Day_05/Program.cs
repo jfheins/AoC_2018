@@ -9,7 +9,7 @@ namespace Day_05
     {
         private static void Main(string[] args)
         {
-            var input = File.ReadAllText(@"../../../input.txt");
+            var input = File.ReadAllText(@"../../../input.txt").Trim();
             input = "dabAcCaCBAcCcaDA";
 
             var result = ReduceAllPairs(input);
