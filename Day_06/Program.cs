@@ -27,7 +27,7 @@ namespace Day_06
             var innerNodes = GetInnerNodes(nodes);
             var size = 480;
             var bmp = new int[size, size];
-
+            var plateauSize = 0;
 
             for (int x = 0; x < size; x++)
             {
@@ -41,6 +41,12 @@ namespace Day_06
                     else
                     {
                         bmp[x, y] = -1;
+                    }
+
+                    var distanceSum = nodes.Select(c => GetManhattanDistance(x, y, c)).Sum();
+                    if (distanceSum < 10000)
+                    {
+                        plateauSize++;
                     }
                 }
             }
@@ -76,7 +82,8 @@ namespace Day_06
                 .Where(x => x.index > -1)
                 .MaxBy(x => x.count).First();
 
-            Console.WriteLine($"Index {maxxed.index} occurs {maxxed.count} times."); //6822 too high
+            Console.WriteLine($"Index {maxxed.index} occurs {maxxed.count} times.");
+            Console.WriteLine($"Center plateau has {plateauSize} fields.");
 
             sw.Stop();
             Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms.");
