@@ -7,6 +7,7 @@ using System.Linq;
 using System.Numerics;
 using static MoreLinq.Extensions.PairwiseExtension;
 using static MoreLinq.Extensions.MaxByExtension;
+using static MoreLinq.Extensions.MinByExtension;
 using MoreEnumerable = MoreLinq.MoreEnumerable;
 
 namespace Day_06
@@ -15,30 +16,67 @@ namespace Day_06
     {
         private static void Main(string[] args)
         {
-            var input = File.ReadAllLines(@"../../../example.txt");
+            var input = File.ReadAllLines(@"../../../input.txt");
 
 
-            var nodes = input.Select(ParseLine).ToArray();
+            var nodes = input.Select((line, idx) => ParseLine(line, idx, 5)).ToArray();
 
             var sw = new Stopwatch();
             sw.Start();
 
             var innerNodes = GetInnerNodes(nodes);
+            var size = 480;
+            var bmp = new int[size, size];
 
-            var bmp = new int[400, 400];
 
-            for (int x = 0; x < bmp.Length; x++)
+            for (int x = 0; x < size; x++)
             {
-                for (int y = 0; y < bmp.Length; y++)
+                for (int y = 0; y < size; y++)
                 {
-                    var dist = nodes.Select(c => (c, GetManhattanDistance(x, y, c))).MaxBy(tuple => tuple.Item2);
-                    if (dist.Count() == 1 && innerNodes.Contains(dist.First().Item1))
+                    var dist = nodes.Select(c => (c, GetManhattanDistance(x, y, c))).MinBy(tuple => tuple.Item2);
+                    if (dist.Count() == 1)
                     {
-                        bmp[x, y] = dist.First();
+                        bmp[x, y] = dist.First().Item1.Index;
+                    }
+                    else
+                    {
+                        bmp[x, y] = -1;
                     }
                 }
             }
+            var edgeNodes = new HashSet<int>();
+            for (int y = 0; y < size; y++)
+            {
+                edgeNodes.Add(bmp[0, y]);
+                edgeNodes.Add(bmp[size - 1, y]);
+            }
+            for (int x = 0; x < size; x++)
+            {
+                edgeNodes.Add(bmp[x, 0]);
+                edgeNodes.Add(bmp[x, size - 1]);
+            }
+            //for (int y = 0; y < size; y++)
+            //{
+            //    for (int x = 0; x < size; x++)
+            //    {
+            //        Console.Write($"{bmp[x, y],3:##0}");
+            //    }
 
+            //    Console.WriteLine();
+            //}
+
+
+            var histogram = bmp.Cast<int>()
+                .ToLookup(x => x)
+                .Select(group => (index: group.Key, count: group.Count()))
+                .ToList();
+            
+            var maxxed = histogram
+                .Where(t => !edgeNodes.Contains(t.index))
+                .Where(x => x.index > -1)
+                .MaxBy(x => x.count).First();
+
+            Console.WriteLine($"Index {maxxed.index} occurs {maxxed.count} times."); //6822 too high
 
             sw.Stop();
             Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms.");
@@ -80,10 +118,15 @@ namespace Day_06
             return innerNodes;
         }
 
-        private static Node ParseLine(string arg, int idx)
+        private static Node ParseLine(string arg, int idx, int offset = 0)
         {
             var array = arg.Split(',').Select(x => x.Trim()).Select(int.Parse).ToArray();
-            return new Node {Coords = new Vector2(array[0], array[1]), Name = idx.ToString()};
+            return new Node
+            {
+                Coords = new Vector2(array[0]+ offset, array[1]+ offset),
+                Index = idx,
+                Name = ((char)('A'+idx)).ToString()
+            };
         }
 
         private static double NormalizeAngle(double angle)
@@ -97,6 +140,7 @@ namespace Day_06
     public class Node
     {
         public Vector2 Coords { get; set; }
+        public int Index { get; set; }
         public string Name { get; set; }
     }
 }
