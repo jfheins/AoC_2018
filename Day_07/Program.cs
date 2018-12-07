@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Core;
+using MoreLinq;
 
 namespace Day_07
 {
@@ -49,7 +50,7 @@ namespace Day_07
                     availableWorkers.RemoveAt(0);
                 }
 
-                time++;
+                time = workers.Where(w => w.FinishTime > 0).MinBy(w => w.FinishTime).FirstOrDefault()?.FinishTime ?? time + 1;
             }
 
             Console.WriteLine("Path:");
