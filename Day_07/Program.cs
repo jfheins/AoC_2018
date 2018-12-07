@@ -16,18 +16,35 @@ namespace Day_07
             var input = File.ReadAllLines(@"../../../input.txt");
 
 
-            var edges = input.Select(ParseLine).ToArray();
-            var nodes = edges.Select(e => e.Source).Concat(edges.Select(e => e.Target)).Distinct().ToArray();
 
             var sw = new Stopwatch();
             sw.Start();
-            
+
+            var (time, path) = GetFinishTimeForSledge(input, 5, 60);
+
+            Console.WriteLine($"Path: {path}");
+            Console.WriteLine();
+
+            Console.WriteLine($"Simulation Time: {time}"); //1276 too high
+
+            sw.Stop();
+            Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms.");
+
+            Console.ReadLine();
+        }
+
+        public static (int time, string path) GetFinishTimeForSledge(IEnumerable<string> input, int workerCount = 2, int stepBaseTime = 0)
+        {
+
+            var edges = input.Select(ParseLine).ToArray();
+            var nodes = edges.Select(e => e.Source).Concat(edges.Select(e => e.Target)).Distinct().ToArray();
+
             var finished = new HashSet<string>();
             var path = new List<string>();
             var remainingNodes = new HashSet<string>(nodes);
             var mapTargetToSources = edges.ToLookup(e => e.Target, e => e.Source);
 
-            var workers = new [] {new Worker(), new Worker(), new Worker(), new Worker(), new Worker() };
+            var workers = new[] { new Worker(), new Worker(), new Worker(), new Worker(), new Worker() };
             var time = 0;
 
             while (remainingNodes.Count > 0 || workers.Any(w => w.WorksOn != null))
@@ -53,17 +70,7 @@ namespace Day_07
                 time = workers.Where(w => w.FinishTime > 0).MinBy(w => w.FinishTime).FirstOrDefault()?.FinishTime ?? time + 1;
             }
 
-            Console.WriteLine("Path:");
-            foreach (var node in path)
-                Console.Write(node);
-            Console.WriteLine();
-
-            Console.WriteLine($"Simulation Time: {time-1}"); //1276 too high
-
-            sw.Stop();
-            Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms.");
-
-            Console.ReadLine();
+            return (time-1, string.Concat(path));
         }
 
         private static T FirstByAlphabet<T>(IEnumerable<T> collection)
