@@ -9,11 +9,11 @@ using MoreLinq;
 
 namespace Day_07
 {
-    internal class Program
+    public class Program
     {
         private static void Main(string[] args)
         {
-            var input = File.ReadAllLines(@"../../../input.txt");
+            var input = File.ReadAllLines(@"../../../demo.txt");
 
 
 
@@ -44,7 +44,7 @@ namespace Day_07
             var remainingNodes = new HashSet<string>(nodes);
             var mapTargetToSources = edges.ToLookup(e => e.Target, e => e.Source);
 
-            var workers = new[] { new Worker(), new Worker(), new Worker(), new Worker(), new Worker() };
+            var workers = Enumerable.Repeat(0, workerCount).Select(_ => new Worker()).ToArray();
             var time = 0;
 
             while (remainingNodes.Count > 0 || workers.Any(w => w.WorksOn != null))
@@ -63,7 +63,7 @@ namespace Day_07
                     remainingNodes.Remove(nextNode);
                     var worker = availableWorkers[0];
                     worker.WorksOn = nextNode;
-                    worker.FinishTime = time + 60 + (nextNode[0] - 'A' + 1);
+                    worker.FinishTime = time + stepBaseTime + (nextNode[0] - 'A' + 1);
                     availableWorkers.RemoveAt(0);
                 }
 
