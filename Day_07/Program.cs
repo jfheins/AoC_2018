@@ -23,26 +23,36 @@ namespace Day_07
             var startNode = FirstByAlphabet(nodes.Where(node => edges.All(e => e.Target != node)));
 
             var visited = new HashSet<string> {startNode};
-            var path = new List<string> { startNode};
-            var remainingNodes = new HashSet<string> (nodes.Except(visited));
+            var path = new List<string> {startNode};
+            var remainingNodes = new HashSet<string>(nodes.Except(visited));
+            var mapTargetToSources = edges.ToLookup(e => e.Target, e => e.Source);
 
-            while (true)
+            while (remainingNodes.Count > 0)
             {
-                var nextNode = FirstByAlphabet(edges
-                    .Where(e => remainingNodes.Contains(e.Target))
-                    .Where(e => visited.Contains(e.Source)));
+                var nextNode = FirstByAlphabet(
+                    remainingNodes
+                        .Where(n => mapTargetToSources[n].All(visited.Contains)));
+            
                 path.Add(nextNode);
                 visited.Add(nextNode);
+                remainingNodes.Remove(nextNode);
             }
 
-            Console.WriteLine(startNode);
+            Console.WriteLine("Path:");
+            foreach (var node in path)
+                Console.Write(node);
+
+            Console.WriteLine();
+            Console.WriteLine("Not reachable:");
+            foreach (var node in remainingNodes)
+                Console.Write(node + " ");
 
             sw.Stop();
             Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms.");
 
             Console.ReadLine();
         }
-        
+
         private static T FirstByAlphabet<T>(IEnumerable<T> collection)
         {
             return collection.OrderBy(x => x).First();
