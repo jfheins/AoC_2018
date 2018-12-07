@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Core;
 
 namespace Day_07
 {
@@ -19,33 +20,44 @@ namespace Day_07
 
             var sw = new Stopwatch();
             sw.Start();
-
-            var startNode = FirstByAlphabet(nodes.Where(node => edges.All(e => e.Target != node)));
-
-            var visited = new HashSet<string> {startNode};
-            var path = new List<string> {startNode};
-            var remainingNodes = new HashSet<string>(nodes.Except(visited));
+            
+            var finished = new HashSet<string>();
+            var path = new List<string>();
+            var remainingNodes = new HashSet<string>(nodes);
             var mapTargetToSources = edges.ToLookup(e => e.Target, e => e.Source);
 
-            while (remainingNodes.Count > 0)
+            var workers = new [] {new Worker(), new Worker()};
+            var time = 0;
+
+            while (remainingNodes.Count > 0 || workers.Any(w => w.WorksOn != null))
             {
-                var nextNode = FirstByAlphabet(
+                var finishedWork = workers.Select(w => w.DoStep(time)).WhereNotNull().ToList();
+                path.AddRange(finishedWork);
+                finished.UnionWith(finishedWork);
+
+                var availableWorkers = workers.Where(w => w.WorksOn == null).ToList();
+                var nextNodes = FirstByAlphabet(availableWorkers.Count,
                     remainingNodes
-                        .Where(n => mapTargetToSources[n].All(visited.Contains)));
-            
-                path.Add(nextNode);
-                visited.Add(nextNode);
-                remainingNodes.Remove(nextNode);
+                        .Where(n => mapTargetToSources[n].All(finished.Contains)));
+
+                foreach (var nextNode in nextNodes)
+                {
+                    remainingNodes.Remove(nextNode);
+                    var worker = availableWorkers[0];
+                    worker.WorksOn = nextNode;
+                    worker.FinishTime = time + 60 + (nextNode[0] - 'A' + 1);
+                    availableWorkers.RemoveAt(0);
+                }
+
+                time++;
             }
 
             Console.WriteLine("Path:");
             foreach (var node in path)
                 Console.Write(node);
-
             Console.WriteLine();
-            Console.WriteLine("Not reachable:");
-            foreach (var node in remainingNodes)
-                Console.Write(node + " ");
+
+            Console.WriteLine($"Simulation Time: {time-1}");
 
             sw.Stop();
             Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms.");
@@ -58,12 +70,39 @@ namespace Day_07
             return collection.OrderBy(x => x).First();
         }
 
+        private static IEnumerable<T> FirstByAlphabet<T>(int count, IEnumerable<T> collection)
+        {
+            return collection.OrderBy(x => x).Take(count);
+        }
+
         private static Edge ParseLine(string line)
         {
             // Step C must be finished before step A can begin.
             var regex = new Regex(@"Step (\w+) must be finished before step (\w+) can begin");
             var groups = regex.Match(line).Groups;
             return new Edge {Source = groups[1].Value, Target = groups[2].Value};
+        }
+
+        private class Worker
+        {
+            public Worker()
+            {
+                FinishTime = -1;
+            }
+
+            public string WorksOn { get; set; }
+            public int FinishTime { get; set; }
+
+            public string DoStep(int currentTime)
+            {
+                if ( WorksOn == null || currentTime < FinishTime)
+                    return null;
+
+                var result = WorksOn;
+                WorksOn = null;
+                FinishTime = -1;
+                return result;
+            }
         }
 
         private struct Edge
