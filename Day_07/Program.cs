@@ -26,7 +26,7 @@ namespace Day_07
             var remainingNodes = new HashSet<string>(nodes);
             var mapTargetToSources = edges.ToLookup(e => e.Target, e => e.Source);
 
-            var workers = new [] {new Worker(), new Worker()};
+            var workers = new [] {new Worker(), new Worker(), new Worker(), new Worker(), new Worker() };
             var time = 0;
 
             while (remainingNodes.Count > 0 || workers.Any(w => w.WorksOn != null))
@@ -57,7 +57,7 @@ namespace Day_07
                 Console.Write(node);
             Console.WriteLine();
 
-            Console.WriteLine($"Simulation Time: {time-1}");
+            Console.WriteLine($"Simulation Time: {time-1}"); //1276 too high
 
             sw.Stop();
             Console.WriteLine($"Took {sw.ElapsedMilliseconds}ms.");
