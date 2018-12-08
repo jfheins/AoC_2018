@@ -20,7 +20,8 @@ namespace Day_08
 
 			var root = Node.FromSeq(numbers);
 
-			Console.WriteLine(root.SumMetadataRecusivly());
+			Console.WriteLine("Metadata sum: " + root.SumMetadataRecusivly());
+			Console.WriteLine("Root value: " + root.GetValue());
 
 			sw.Stop();
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
@@ -55,8 +56,27 @@ namespace Day_08
 				return node;
 			}
 
-			public int SumMetadataRecusivly() => Metadata.Sum() + Children.Select(c => c.SumMetadataRecusivly()).Sum();
+			public int SumMetadataRecusivly()
+			{
+				return Metadata.Sum() + Children.Select(c => c.SumMetadataRecusivly()).Sum();
+			}
 
+			public int GetValue()
+			{
+				if (!Children.Any())
+					return Metadata.Sum();
+
+				var sum = 0;
+				foreach (var childIdx in Metadata.Select(x => x-1))
+				{
+					if (childIdx >= 0 && childIdx < Children.Count)
+					{
+						sum += Children[childIdx].GetValue();
+					}
+				}
+
+				return sum;
+			}
 		}
 	}
 }
