@@ -14,9 +14,7 @@ namespace Day_07
         private static void Main(string[] args)
         {
             var input = File.ReadAllLines(@"../../../demo.txt");
-
-
-
+			
             var sw = new Stopwatch();
             sw.Start();
 
