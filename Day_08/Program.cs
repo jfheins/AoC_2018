@@ -66,16 +66,10 @@ namespace Day_08
 				if (!Children.Any())
 					return Metadata.Sum();
 
-				var sum = 0;
-				foreach (var childIdx in Metadata.Select(x => x-1))
-				{
-					if (childIdx >= 0 && childIdx < Children.Count)
-					{
-						sum += Children[childIdx].GetValue();
-					}
-				}
-
-				return sum;
+				return Metadata
+					.Select(x => x - 1)
+					.Where(childIdx => childIdx >= 0 && childIdx < Children.Count)
+					.Sum(childIdx => Children[childIdx].GetValue());
 			}
 		}
 	}
