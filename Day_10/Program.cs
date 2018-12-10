@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Day_10
@@ -14,24 +15,34 @@ namespace Day_10
 			var input = File.ReadAllLines(@"../../../input.txt");
 			var lights = input.Select(Light.FromLine).ToList();
 
-			var minSize = new Size(44000, 44000);
+			var minimalArea = long.MaxValue;
+            var minRect = Rectangle.Empty;
+		    var resultTime = -1;
 
-			for (var i = 0; i < 100; i++)
+			for (var i = 0; i < 1000000; i++)
 			{
 				foreach (var light in lights)
 					light.Move();
 
-				var width = (long)lights.Max(l => l.Pos.X) - lights.Min(l => l.Pos.X) + 1;
-				var height = (long)lights.Max(l => l.Pos.Y) - lights.Min(l => l.Pos.Y) + 1;
-				if (width * height < minSize.Width * minSize.Height)
+                var currentRect = new Rectangle(
+                    lights.Min(l => l.Pos.X),
+                    lights.Min(l => l.Pos.Y),
+                    lights.Max(l => l.Pos.X) + 1,
+                    lights.Max(l => l.Pos.Y) + 1
+                    );
+
+			    long currentArea = (long)currentRect.Width * (long)currentRect.Height;
+
+				if (currentArea < minimalArea)
 				{
-					Debug.Assert(width < int.MaxValue);
-					minSize.Width = (int)width;
-					minSize.Height = (int)height;
+				    minRect = currentRect;
+				    minimalArea = currentArea;
 				}
 				else
 				{
-					break;
+				    resultTime = i;
+
+                    break;
 				}
 			}
 
@@ -39,23 +50,28 @@ namespace Day_10
 			foreach (var light in lights)
 				light.Move(-1);
 
-			var minX = lights.Min(l => l.Pos.X);
-			var minY = lights.Min(l => l.Pos.Y);
+			var minX = minRect.Left;
+			var minY = minRect.Top;
 
-			for (var y = minY; y < minSize.Height; y++)
+		    var result = new StringBuilder();
+
+			for (var y = minY; y < minRect.Bottom; y++)
 			{
-				var line = new char[minSize.Width];
-				for (var x = minX; x < minSize.Width; x++)
+				var line = new char[minRect.Width];
+				for (var x = minX; x < minRect.Right; x++)
 				{
+				    var idx = x - minX;
 					if (lights.Any(l => l.IsAt(x, y)))
-						line[x-minX] = '#';
+						line[idx] = '#';
 					else
-						line[x - minX] = '.';
+						line[idx] = '.';
 				}
 
-				Console.WriteLine(line);
+			    result.AppendLine(string.Concat(line));
 			}
 
+            File.WriteAllText(@"../../../output.txt", result.ToString());
+		    Console.WriteLine($"Finish after {resultTime} secs :-)");
 			//Console.WriteLine(game.ToString());
 			Console.ReadLine();
 		}
