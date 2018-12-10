@@ -9,6 +9,9 @@
     <Reference Include="C5">
       <HintPath>C:\Users\Julius\.nuget\packages\c5\2.5.3\lib\netstandard1.0\C5.dll</HintPath>
     </Reference>
+    <Reference Include="MoreLinq">
+      <HintPath>C:\Users\Julius\.nuget\packages\morelinq\3.0.0\lib\netstandard2.0\MoreLinq.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

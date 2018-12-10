@@ -18,7 +18,7 @@ namespace Day_09.Test
 		{
 			var game = new MarbleGame();
 			game.PlaceNextMarble(1);
-			Assert.AreEqual("[1]  0 (1) ", game.ToString());
+			Assert.AreEqual("[1]  0  (1)", game.ToString());
 		}
 	}
 }
