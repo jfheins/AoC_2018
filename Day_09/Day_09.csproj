@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="morelinq" Version="3.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="C5">
       <HintPath>C:\Users\Julius\.nuget\packages\c5\2.5.3\lib\netstandard1.0\C5.dll</HintPath>
     </Reference>

@@ -10,7 +10,7 @@ namespace Day_09
 		private static void Main(string[] args)
 		{
 			var players = 438;
-			var rounds = 71626;
+			var rounds = 7162600;
 
 			var game = new MarbleGame(players);
 
@@ -18,8 +18,7 @@ namespace Day_09
 			{
 				game.PlaceNextMarble(i % players);
 			}
-
-
+			
 			//Console.WriteLine(game.ToString());
 			var winner = game.Score.MaxBy(kvp => kvp.Value).First();
 			Console.WriteLine($"Elf {winner.Key + 1} scored {winner.Value}") ;
@@ -33,7 +32,7 @@ namespace Day_09
 		public LinkedListNode<Marble> CurrentMarble { get; set; } = null;
 		public string LastPlayer { get; set; } = "-";
 
-		public Dictionary<int, int> Score { get; } = new Dictionary<int, int>();
+		public Dictionary<long, long> Score { get; } = new Dictionary<long, long>();
 
 		public MarbleGame(int playercount)
 		{
