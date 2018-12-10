@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Core;
+using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -70,9 +71,7 @@ namespace Day_10
 
 		public static Light FromLine(string s)
 		{
-			var groups = regex.Match(s).Groups;
-			var numbers = groups.Skip(1).Select(g => int.Parse(g.Value)).ToArray();
-			Debug.Assert(groups.Count == 5);
+			var numbers = s.ParseInts();
 			return new Light
 			{
 				Pos = new Point(numbers[0], numbers[1]),
