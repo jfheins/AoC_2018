@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using MoreLinq;
 
 namespace Day_11
@@ -22,6 +23,11 @@ namespace Day_11
             for (var sqsize = 1; sqsize <= 20; sqsize++)
             {
                 Console.WriteLine($"Squaresize: {sqsize}");
+                var yRange = Enumerable.Range(1, gridsize - sqsize + 1);
+                var xRange = Enumerable.Range(1, gridsize - sqsize + 1);
+
+                var allCoords = xRange.Cartesian(yRange, (x, y) => (x, y));
+
                 for (var x = 0; x < gridsize - sqsize + 1; x++)
                 {
                     for (var y = 0; y < gridsize - sqsize + 1; y++)
