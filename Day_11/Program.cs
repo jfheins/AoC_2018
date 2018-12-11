@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
-using Core;
 using MoreLinq;
 
 namespace Day_11
@@ -55,12 +54,16 @@ namespace Day_11
 
         private static int CalcPowerLevelForRect(Rectangle rect)
         {
-            var xRange = Enumerable.Range(rect.Left, rect.Width);
-            var yRange = Enumerable.Range(rect.Top, rect.Height);
+            var sum = 0;
+            for (var x = rect.Left; x < rect.Right; x++)
+            {
+                for (var y = rect.Top; y < rect.Bottom; y++)
+                {
+                    sum += GetPowerLevelForCell(x, y);
+                }
+            }
 
-            return xRange.CartesianProduct(yRange)
-                .Select(t => GetPowerLevelForCell(t.Item1, t.Item2))
-                .Sum();
+            return sum;
         }
 
         private static int CalcPowerLevelForRect(int x, int y, int size)
