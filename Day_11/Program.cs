@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
+using Core;
 using MoreLinq;
 
 namespace Day_11
@@ -23,17 +25,13 @@ namespace Day_11
             for (var sqsize = 1; sqsize <= 20; sqsize++)
             {
                 Console.WriteLine($"Squaresize: {sqsize}");
-                var yRange = Enumerable.Range(1, gridsize - sqsize + 1);
-                var xRange = Enumerable.Range(1, gridsize - sqsize + 1);
 
-                var allCoords = xRange.Cartesian(yRange, (x, y) => (x, y));
+                var allRects = GetAllSquares(gridsize, sqsize);
+                Console.WriteLine($"{allRects.Count} squares");
 
-                for (var x = 0; x < gridsize - sqsize + 1; x++)
+                foreach (var rect in allRects)
                 {
-                    for (var y = 0; y < gridsize - sqsize + 1; y++)
-                    {
-                        powers[(x + 1, y + 1, sqsize)] = CalcPowerLevelForSquare(x, y, sqsize);
-                    }
+                    powers[(rect.X, rect.Y, sqsize)] = CalcPowerLevelForRect(rect);
                 }
             }
 
@@ -47,7 +45,25 @@ namespace Day_11
             Console.ReadLine();
         }
 
-        private static int CalcPowerLevelForSquare(int x, int y, int size)
+        private static List<Rectangle> GetAllSquares(int gridSize, int squareSize)
+        {
+            var xRange = Enumerable.Range(1, gridSize - squareSize + 1);
+            var yRange = Enumerable.Range(1, gridSize - squareSize + 1);
+
+            return xRange.Cartesian(yRange, (x, y) => new Rectangle(x, y, squareSize, squareSize)).ToList();
+        }
+
+        private static int CalcPowerLevelForRect(Rectangle rect)
+        {
+            var xRange = Enumerable.Range(rect.Left, rect.Width);
+            var yRange = Enumerable.Range(rect.Top, rect.Height);
+
+            return xRange.CartesianProduct(yRange)
+                .Select(t => GetPowerLevelForCell(t.Item1, t.Item2))
+                .Sum();
+        }
+
+        private static int CalcPowerLevelForRect(int x, int y, int size)
         {
             var power = 0;
             for (var i = 1; i <= size; i++)
