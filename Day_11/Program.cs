@@ -21,16 +21,35 @@ namespace Day_11
 
             var powers = new Dictionary<(int, int, int), int>();
 
-            for (var sqsize = 1; sqsize <= 20; sqsize++)
+            for (var sqsize = 1; sqsize <= 300; sqsize++)
             {
                 Console.WriteLine($"Squaresize: {sqsize}");
 
                 var allRects = GetAllSquares(gridsize, sqsize);
                 Console.WriteLine($"{allRects.Count} squares");
 
-                foreach (var rect in allRects)
+                if (sqsize % 2 == 0)
                 {
-                    powers[(rect.X, rect.Y, sqsize)] = CalcPowerLevelForRect(rect);
+                    foreach (var rect in allRects)
+                    {
+                        powers[(rect.X, rect.Y, sqsize)] =
+                            GetQuarters(rect).Select(r => powers[(r.X, r.Y, sqsize/2)]).Sum();
+                    }
+                }
+                else if (sqsize % 3 == 0)
+                {
+                    foreach (var rect in allRects)
+                    {
+                        powers[(rect.X, rect.Y, sqsize)] =
+                            GetQuarters(rect).Select(r => powers[(r.X, r.Y, sqsize / 3)]).Sum();
+                    }
+                }
+                else
+                {
+                    foreach (var rect in allRects)
+                    {
+                        powers[(rect.X, rect.Y, sqsize)] = CalcPowerLevelForRect(rect);
+                    }
                 }
             }
 
@@ -42,6 +61,33 @@ namespace Day_11
             Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
 
             Console.ReadLine();
+        }
+
+        private static IEnumerable<Rectangle> GetQuarters(Rectangle rect)
+        {
+            var quarterSize = new Size(rect.Width / 2, rect.Height / 2);
+            yield return new Rectangle(rect.Location, quarterSize);
+            yield return new Rectangle(Point.Add(rect.Location, new Size(rect.Width / 2, 0)), quarterSize);
+            yield return new Rectangle(Point.Add(rect.Location, new Size(0, rect.Width / 2)), quarterSize);
+            yield return new Rectangle(Point.Add(rect.Location, quarterSize), quarterSize);
+        }
+
+        private static IEnumerable<Rectangle> GetParts(Rectangle rect, int divider = 3)
+        {
+            var ninthSize = new Size(rect.Width / 3, rect.Height / 3);
+
+            var xSize = new Size(rect.Width / divider, 0);
+            var ySize = new Size(0, rect.Height / divider);
+
+            var xRange = Enumerable.Range(1, divider);
+            var yRange = Enumerable.Range(1, divider);
+
+            xRange.Cartesian(yRange, (x, y) => new Rectangle()).ToList();
+
+            yield return new Rectangle(rect.Location, ninthSize);
+            yield return new Rectangle(Point.Add(rect.Location, new Size(rect.Width / 2, 0)), quarterSize);
+            yield return new Rectangle(Point.Add(rect.Location, new Size(0, rect.Width / 2)), quarterSize);
+            yield return new Rectangle(Point.Add(rect.Location, quarterSize), quarterSize);
         }
 
         private static List<Rectangle> GetAllSquares(int gridSize, int squareSize)
