@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Core;
 using MoreLinq;
 
@@ -14,9 +15,12 @@ namespace Day_11
 			_serialNumber = 7315;
 			var gridsize = 300;
 
-			var powers = new Dictionary<(int, int, int), int>();
+			var sw = new Stopwatch();
+			sw.Start();
 
-			for (var sqsize = 1; sqsize < 20; sqsize++)
+			var powers = new Dictionary<(int, int, int), int>();
+			
+			for (var sqsize = 1; sqsize <= 20; sqsize++)
 			{
 				Console.WriteLine($"Square: {sqsize}");
 				for (var x = 0; x < gridsize - sqsize + 1; x++)
@@ -45,10 +49,11 @@ namespace Day_11
 
 			Console.WriteLine(max.Key);
 
+			sw.Stop();
+			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
+
 			Console.ReadLine();
 		}
-
-		private static readonly Dictionary<(int, int), int> cache = new Dictionary<(int, int), int>();
 
 		//private static int Get2PowerLevel(int x, int y)
 		//{
