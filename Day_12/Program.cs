@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Core;
+using MoreLinq;
 
 namespace Day_12
 {
@@ -11,46 +12,35 @@ namespace Day_12
     {
         private static char[] state;
         private static int offset;
-        private static Dictionary<string, char> _transitions;
+
+        static HashSet<int> plantIndicies;
 
         private static void Main(string[] args)
         {
             var input =
                 @"###....#..#..#......####.#..##..#..###......##.##..#...#.##.###.##.###.....#.###..#.#.##.#..#.#";
-            var transistionInput = File.ReadAllLines(@"../../../transitions.txt");
-            _transitions = new Dictionary<string, char>(transistionInput.Select(ParseLine));
-            var generations = 20;
+            var transitionInput = File.ReadAllLines(@"../../../transitions.txt");
+
+            var transitions = new Dictionary<int, char>(transitionInput.Select(ParseLine));
+
+            long generations = 20;
             
             var sw = new Stopwatch();
             sw.Start();
 
+            plantIndicies = new HashSet<int>(input.IndexWhere(c => c == '#'));
 
-            offset = 6 + 2 * generations;
-            var max = input.Length + offset;
-            state = new char[offset + max + 1];
-
-            for (var i = 0; i < state.Length; i++)
+            for (long gen = 1; gen <= generations; gen++)
             {
-                state[i] = '.';
+                var newIdx = plantIndicies.SelectMany(NextPossibleIndicies).Select(GetChunk).Select(transitions[]);
             }
 
-            var plantIndicies = new HashSet<int>(input.IndexWhere(c => c == '#'));
-
-            foreach (var plantIndex in plantIndicies)
-            {
-                state[PlantIndexToArrayIndex(plantIndex)] = '#';
-            }
-
-            Console.Write("Initial:             ");
-            Console.WriteLine(string.Concat(state));
-
-            var nextState = state.ToArray();
             for (int gen = 1; gen <= generations; gen++)
             {
 
                 for (int i = 2; i < state.Length-2; i++)
                 {
-                    nextState[i] = GetNextState(GetChunk(i));
+                    nextState[i] = transitions[GetChunk(i)];
                 }
 
                 state = nextState.ToArray();
@@ -60,21 +50,23 @@ namespace Day_12
             }
 
             var part1 = state.IndexWhere(c => c == '#').Select(ArrayIndexToPlantIndex).Sum();
-            Console.WriteLine($"Part1 solution: {part1}"); // 3742 too high
+            Console.WriteLine($"Part1 solution: {part1}");
 
             sw.Stop();
             Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
             Console.ReadLine();
         }
 
-        private static char GetNextState(string s)
+        private static IEnumerable<int> NextPossibleIndicies(int plantIndex)
         {
-            return _transitions.TryGetValue(s, out var result) ? result : '.';
+            return Enumerable.Range(plantIndex - 2, 5);
         }
 
-        private static KeyValuePair<string, char> ParseLine(string arg)
+        private static KeyValuePair<int, char> ParseLine(string arg)
         {
-            return new KeyValuePair<string, char>(arg.Substring(0, 5), arg.Trim().Last());
+            var keyStr = arg.Substring(0, 5);
+            var key = keyStr.EquiZip(new[] {1, 2, 4, 8, 16}, (c, pow) => (c == '#') ? pow : 0).Sum();
+            return new KeyValuePair<int, char>(key, arg.Trim().Last());
         }
 
         private static int PlantIndexToArrayIndex(int plantIndex)
@@ -91,6 +83,11 @@ namespace Day_12
         {
             //return state.AsSpan(currentPlant - 2, 5);
             return new string(state.AsSpan(arrIndex - 2, 5));
+        }
+
+        private static char GetNextTransistion(int plantIndex)
+        {
+            
         }
     }
 }
