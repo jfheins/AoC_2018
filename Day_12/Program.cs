@@ -14,6 +14,7 @@ namespace Day_12
         private static int offset;
 
         static HashSet<int> plantIndicies;
+        static Dictionary<int, char> transitions;
 
         private static void Main(string[] args)
         {
@@ -21,7 +22,7 @@ namespace Day_12
                 @"###....#..#..#......####.#..##..#..###......##.##..#...#.##.###.##.###.....#.###..#.#.##.#..#.#";
             var transitionInput = File.ReadAllLines(@"../../../transitions.txt");
 
-            var transitions = new Dictionary<int, char>(transitionInput.Select(ParseLine));
+            transitions = new Dictionary<int, char>(transitionInput.Select(ParseLine));
 
             long generations = 20;
             
@@ -32,25 +33,16 @@ namespace Day_12
 
             for (long gen = 1; gen <= generations; gen++)
             {
-                var newIdx = plantIndicies.SelectMany(NextPossibleIndicies).Select(GetChunk).Select(transitions[]);
+                var newIdx = plantIndicies
+                    .SelectMany(NextPossibleIndicies)
+                    .Select(GetNextTransistion)
+                    .Where(i => i.HasValue)
+                    .Select(i => i.Value);
+                plantIndicies = new HashSet<int>(newIdx);
             }
 
-            for (int gen = 1; gen <= generations; gen++)
-            {
-
-                for (int i = 2; i < state.Length-2; i++)
-                {
-                    nextState[i] = transitions[GetChunk(i)];
-                }
-
-                state = nextState.ToArray();
-
-                Console.Write($"After generation {gen}:  ");
-                Console.WriteLine(string.Concat(state));
-            }
-
-            var part1 = state.IndexWhere(c => c == '#').Select(ArrayIndexToPlantIndex).Sum();
-            Console.WriteLine($"Part1 solution: {part1}");
+            var part1 = plantIndicies.Sum();
+            Console.WriteLine($"Part solution: {part1}");
 
             sw.Stop();
             Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
@@ -85,9 +77,11 @@ namespace Day_12
             return new string(state.AsSpan(arrIndex - 2, 5));
         }
 
-        private static char GetNextTransistion(int plantIndex)
+        private static int? GetNextTransistion(int plantIndex)
         {
-            
+            var plants = Enumerable.Range(plantIndex - 2, 5).Select(plantIndicies.Contains);
+            var key = plants.EquiZip(new[] { 1, 2, 4, 8, 16 }, (p, pow) => p ? pow : 0).Sum();
+            return transitions[key] == '#' ? (int?)plantIndex : null;
         }
     }
 }
