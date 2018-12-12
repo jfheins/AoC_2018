@@ -34,8 +34,12 @@ namespace Day_12
             {
                 Console.WriteLine($"Generation {gen}");
 
-                var lastDiffs = generationSums.TakeLast(4).PairwiseWithOverlap()
-                    .Select(x => x.Item2.Value - x.Item1.Value).ToArray();
+                var lastDiffs = generationSums
+                    .TakeLast(4)
+                    .Select(kvp => kvp.Value)
+                    .PairwiseWithOverlap()
+                    .Select(x => x.Diff())
+                    .ToArray();
                 if (lastDiffs.Length == 3 && lastDiffs.All(x => x == lastDiffs[0]))
                 {
                     // No change any more
