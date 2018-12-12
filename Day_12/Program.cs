@@ -40,7 +40,7 @@ namespace Day_12
                     .PairwiseWithOverlap()
                     .Select(x => x.Diff())
                     .ToArray();
-                if (lastDiffs.Length == 3 && lastDiffs.All(x => x == lastDiffs[0]))
+                if (lastDiffs.Length == 3 && lastDiffs.AreAllEqual())
                 {
                     // No change any more
                     var diff = lastDiffs.First();
