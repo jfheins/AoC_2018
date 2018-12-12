@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Core;
-using MoreLinq;
+using MoreLinq.Extensions;
 
 namespace Day_12
 {
@@ -24,25 +24,46 @@ namespace Day_12
 
             transitions = new Dictionary<int, char>(transitionInput.Select(ParseLine));
 
-            long generations = 200000;
+            long generations = 50000000000;
             
             var sw = new Stopwatch();
             sw.Start();
 
             plantIndicies = new HashSet<int>(input.IndexWhere(c => c == '#'));
+            var generationSums = new Dictionary<long, long>();
 
             for (long gen = 1; gen <= generations; gen++)
             {
+                if (gen % 1 == 0)
+                {
+                    Console.WriteLine($"Generation {gen}");
+                }
+
+                var lastDiffs = TakeLastExtension.TakeLast(generationSums, 4).PairwiseWithOverlap().Select(x => x.Item2.Value - x.Item1.Value).ToArray();
+                if (lastDiffs.Length == 3 && lastDiffs.All(x => x== lastDiffs.First()))
+                {
+                    // No change any more
+                    var diff = lastDiffs.First();
+                    var lastSum = generationSums[gen - 1];
+                    generationSums.Add(gen, lastSum + diff);
+                    var remaining = generations - gen + 1;
+                    generationSums.Add(generations, lastSum + remaining * diff);
+                    break;
+                }
+
                 var newIdx = plantIndicies
                     .SelectMany(NextPossibleIndicies)
                     .Select(GetNextTransition)
                     .Where(i => i.HasValue)
                     .Select(i => i.Value);
                 plantIndicies = new HashSet<int>(newIdx);
+                generationSums.Add(gen, plantIndicies.Sum());
             }
 
             var part1 = plantIndicies.Sum();
-            Console.WriteLine($"Part solution: {part1}");
+            var part2 = generationSums[generations];
+            Console.WriteLine($"Part1 solution: {part1}");
+            Console.WriteLine($"Part2 solution: {part2}");
 
             sw.Stop();
             Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
@@ -51,7 +72,7 @@ namespace Day_12
 
         private static IEnumerable<int> NextPossibleIndicies(int plantIndex)
         {
-            return Enumerable.Range(plantIndex - 2, 5);
+            return Enumerable.Range(plantIndex - 1, 3);
         }
 
         private static KeyValuePair<int, char> ParseLine(string arg)
