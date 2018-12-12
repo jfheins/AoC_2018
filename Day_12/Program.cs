@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Core;
-using MoreLinq.Extensions;
 
 namespace Day_12
 {
@@ -13,8 +12,8 @@ namespace Day_12
         private static char[] state;
         private static int offset;
 
-        static HashSet<int> plantIndicies;
-        static Dictionary<int, char> transitions;
+        private static HashSet<int> plantIndicies;
+        private static Dictionary<int, char> transitions;
 
         private static void Main(string[] args)
         {
@@ -24,8 +23,8 @@ namespace Day_12
 
             transitions = new Dictionary<int, char>(transitionInput.Select(ParseLine));
 
-            long generations = 50000000000;
-            
+            var generations = 50000000000;
+
             var sw = new Stopwatch();
             sw.Start();
 
@@ -34,18 +33,15 @@ namespace Day_12
 
             for (long gen = 1; gen <= generations; gen++)
             {
-                if (gen % 1 == 0)
-                {
-                    Console.WriteLine($"Generation {gen}");
-                }
+                Console.WriteLine($"Generation {gen}");
 
-                var lastDiffs = TakeLastExtension.TakeLast(generationSums, 4).PairwiseWithOverlap().Select(x => x.Item2.Value - x.Item1.Value).ToArray();
-                if (lastDiffs.Length == 3 && lastDiffs.All(x => x== lastDiffs.First()))
+                var lastDiffs = generationSums.TakeLast(4).PairwiseWithOverlap()
+                    .Select(x => x.Item2.Value - x.Item1.Value).ToArray();
+                if (lastDiffs.Length == 3 && lastDiffs.All(x => x == lastDiffs[0]))
                 {
                     // No change any more
                     var diff = lastDiffs.First();
                     var lastSum = generationSums[gen - 1];
-                    generationSums.Add(gen, lastSum + diff);
                     var remaining = generations - gen + 1;
                     generationSums.Add(generations, lastSum + remaining * diff);
                     break;
@@ -60,10 +56,8 @@ namespace Day_12
                 generationSums.Add(gen, plantIndicies.Sum());
             }
 
-            var part1 = plantIndicies.Sum();
-            var part2 = generationSums[generations];
-            Console.WriteLine($"Part1 solution: {part1}");
-            Console.WriteLine($"Part2 solution: {part2}");
+            Console.WriteLine($"Part1 solution: {generationSums[20]}");
+            Console.WriteLine($"Part2 solution: {generationSums[generations]}");
 
             sw.Stop();
             Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
@@ -78,24 +72,8 @@ namespace Day_12
         private static KeyValuePair<int, char> ParseLine(string arg)
         {
             var keyStr = arg.Substring(0, 5);
-            var key = keyStr.EquiZip(new[] {1, 2, 4, 8, 16}, (c, pow) => (c == '#') ? pow : 0).Sum();
+            var key = keyStr.Zip(new[] {1, 2, 4, 8, 16}, (c, pow) => c == '#' ? pow : 0).Sum();
             return new KeyValuePair<int, char>(key, arg.Trim().Last());
-        }
-
-        private static int PlantIndexToArrayIndex(int plantIndex)
-        {
-            return plantIndex + offset;
-        }
-
-        private static int ArrayIndexToPlantIndex(int arrIndex)
-        {
-            return arrIndex - offset;
-        }
-
-        private static string GetChunk(int arrIndex)
-        {
-            //return state.AsSpan(currentPlant - 2, 5);
-            return new string(state.AsSpan(arrIndex - 2, 5));
         }
 
         private static int? GetNextTransition(int plantIndex)
@@ -107,7 +85,7 @@ namespace Day_12
             var temp_5 = plantIndicies.Contains(plantIndex + 2) ? 16 : 0;
             var key = temp_1 + temp_2 + temp_3 + temp_4 + temp_5;
 
-            return transitions[key] == '#' ? (int?)plantIndex : null;
+            return transitions[key] == '#' ? (int?) plantIndex : null;
         }
     }
 }
