@@ -12,23 +12,22 @@ namespace Day_12
         private static char[] state;
         private static int offset;
 
-        private static HashSet<int> plantIndicies;
-        private static Dictionary<int, char> transitions;
+        private static HashSet<int> _plantIndicies;
+        private static Dictionary<string, char> _transitions;
 
         private static void Main(string[] args)
         {
             var input =
                 @"###....#..#..#......####.#..##..#..###......##.##..#...#.##.###.##.###.....#.###..#.#.##.#..#.#";
             var transitionInput = File.ReadAllLines(@"../../../transitions.txt");
-
-            transitions = new Dictionary<int, char>(transitionInput.Select(ParseLine));
+            _transitions = new Dictionary<string, char>(transitionInput.Select(ParseLine));
 
             var generations = 50000000000;
 
             var sw = new Stopwatch();
             sw.Start();
 
-            plantIndicies = new HashSet<int>(input.IndexWhere(c => c == '#'));
+            _plantIndicies = new HashSet<int>(input.IndexWhere(c => c == '#'));
             var generationSums = new Dictionary<long, long>();
 
             for (long gen = 1; gen <= generations; gen++)
@@ -47,13 +46,13 @@ namespace Day_12
                     break;
                 }
 
-                var newIdx = plantIndicies
+                var newIdx = _plantIndicies
                     .SelectMany(NextPossibleIndicies)
                     .Select(GetNextTransition)
                     .Where(i => i.HasValue)
                     .Select(i => i.Value);
-                plantIndicies = new HashSet<int>(newIdx);
-                generationSums.Add(gen, plantIndicies.Sum());
+                _plantIndicies = new HashSet<int>(newIdx);
+                generationSums.Add(gen, _plantIndicies.Sum());
             }
 
             Console.WriteLine($"Part1 solution: {generationSums[20]}");
@@ -69,23 +68,20 @@ namespace Day_12
             return Enumerable.Range(plantIndex - 2, 5);
         }
 
-        private static KeyValuePair<int, char> ParseLine(string arg)
+        private static KeyValuePair<string, char> ParseLine(string arg)
         {
             var keyStr = arg.Substring(0, 5);
-            var key = keyStr.Zip(new[] {1, 2, 4, 8, 16}, (c, pow) => c == '#' ? pow : 0).Sum();
-            return new KeyValuePair<int, char>(key, arg.Trim().Last());
+            return new KeyValuePair<string, char>(keyStr, arg.Trim().Last());
         }
 
         private static int? GetNextTransition(int plantIndex)
         {
-            var temp_1 = plantIndicies.Contains(plantIndex - 2) ? 1 : 0;
-            var temp_2 = plantIndicies.Contains(plantIndex - 1) ? 2 : 0;
-            var temp_3 = plantIndicies.Contains(plantIndex + 0) ? 4 : 0;
-            var temp_4 = plantIndicies.Contains(plantIndex + 1) ? 8 : 0;
-            var temp_5 = plantIndicies.Contains(plantIndex + 2) ? 16 : 0;
-            var key = temp_1 + temp_2 + temp_3 + temp_4 + temp_5;
+            var chunk = Enumerable.Range(-2, 5)
+                .Select(i => _plantIndicies.Contains(plantIndex + i))
+                .Select(isPlant => isPlant ? '#' : '.');
+            var key = string.Concat(chunk);
 
-            return transitions[key] == '#' ? (int?) plantIndex : null;
+            return _transitions[key] == '#' ? (int?) plantIndex : null;
         }
     }
 }
