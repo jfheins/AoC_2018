@@ -21,7 +21,7 @@ namespace Day_11
 			var sw = new Stopwatch();
 			sw.Start();
 
-			var squareSizes = Enumerable.Range(1, 40);
+			var squareSizes = Enumerable.Range(1, 50);
 			foreach (var sqsize in squareSizes)
 			{
 				Console.WriteLine($"Squaresize: {sqsize}");
@@ -29,7 +29,15 @@ namespace Day_11
 				var allRects = GetAllSquares(gridsize, sqsize);
 				Console.WriteLine($"{allRects.Count} squares");
 
-				if (sqsize % 5 == 0)
+				if (sqsize % 7 == 0)
+				{
+					foreach (var rect in allRects)
+					{
+						var parts = Divide(rect, 7);
+						_rectPowers[(rect.X, rect.Y, sqsize)] = parts.Select(lookup).Sum();
+					}
+				}
+				else if (sqsize % 5 == 0)
 				{
 					foreach (var rect in allRects)
 					{
