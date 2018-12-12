@@ -11,13 +11,14 @@ namespace Day_12
     {
         private static char[] state;
         private static int offset;
+        private static Dictionary<string, char> _transitions;
 
         private static void Main(string[] args)
         {
             var input =
                 @"###....#..#..#......####.#..##..#..###......##.##..#...#.##.###.##.###.....#.###..#.#.##.#..#.#";
             var transistionInput = File.ReadAllLines(@"../../../transitions.txt");
-            var transitions = new Dictionary<string, char>(transistionInput.Select(ParseLine));
+            _transitions = new Dictionary<string, char>(transistionInput.Select(ParseLine));
             var generations = 20;
             
             var sw = new Stopwatch();
@@ -49,7 +50,7 @@ namespace Day_12
 
                 for (int i = 2; i < state.Length-2; i++)
                 {
-                    nextState[i] = transitions[GetChunk(i)];
+                    nextState[i] = GetNextState(GetChunk(i));
                 }
 
                 state = nextState.ToArray();
@@ -58,12 +59,17 @@ namespace Day_12
                 Console.WriteLine(string.Concat(state));
             }
 
-            var part1 = state.IndexWhere(c => c == '#').Sum();
+            var part1 = state.IndexWhere(c => c == '#').Select(ArrayIndexToPlantIndex).Sum();
             Console.WriteLine($"Part1 solution: {part1}"); // 3742 too high
 
             sw.Stop();
             Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
             Console.ReadLine();
+        }
+
+        private static char GetNextState(string s)
+        {
+            return _transitions.TryGetValue(s, out var result) ? result : '.';
         }
 
         private static KeyValuePair<string, char> ParseLine(string arg)
@@ -76,7 +82,7 @@ namespace Day_12
             return plantIndex + offset;
         }
 
-        private static int ArrayIndexToÜPlantIndex(int arrIndex)
+        private static int ArrayIndexToPlantIndex(int arrIndex)
         {
             return arrIndex - offset;
         }
