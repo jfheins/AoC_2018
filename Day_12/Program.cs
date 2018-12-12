@@ -24,7 +24,7 @@ namespace Day_12
 
             transitions = new Dictionary<int, char>(transitionInput.Select(ParseLine));
 
-            long generations = 20;
+            long generations = 200000;
             
             var sw = new Stopwatch();
             sw.Start();
@@ -35,7 +35,7 @@ namespace Day_12
             {
                 var newIdx = plantIndicies
                     .SelectMany(NextPossibleIndicies)
-                    .Select(GetNextTransistion)
+                    .Select(GetNextTransition)
                     .Where(i => i.HasValue)
                     .Select(i => i.Value);
                 plantIndicies = new HashSet<int>(newIdx);
@@ -77,10 +77,15 @@ namespace Day_12
             return new string(state.AsSpan(arrIndex - 2, 5));
         }
 
-        private static int? GetNextTransistion(int plantIndex)
+        private static int? GetNextTransition(int plantIndex)
         {
-            var plants = Enumerable.Range(plantIndex - 2, 5).Select(plantIndicies.Contains);
-            var key = plants.EquiZip(new[] { 1, 2, 4, 8, 16 }, (p, pow) => p ? pow : 0).Sum();
+            var temp_1 = plantIndicies.Contains(plantIndex - 2) ? 1 : 0;
+            var temp_2 = plantIndicies.Contains(plantIndex - 1) ? 2 : 0;
+            var temp_3 = plantIndicies.Contains(plantIndex + 0) ? 4 : 0;
+            var temp_4 = plantIndicies.Contains(plantIndex + 1) ? 8 : 0;
+            var temp_5 = plantIndicies.Contains(plantIndex + 2) ? 16 : 0;
+            var key = temp_1 + temp_2 + temp_3 + temp_4 + temp_5;
+
             return transitions[key] == '#' ? (int?)plantIndex : null;
         }
     }
