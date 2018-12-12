@@ -66,7 +66,7 @@ namespace Day_12
 
         private static IEnumerable<int> NextPossibleIndicies(int plantIndex)
         {
-            return Enumerable.Range(plantIndex - 1, 3);
+            return Enumerable.Range(plantIndex - 2, 5);
         }
 
         private static KeyValuePair<int, char> ParseLine(string arg)
