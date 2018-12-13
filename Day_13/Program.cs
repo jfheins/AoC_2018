@@ -33,7 +33,7 @@ namespace Day_13
 			while (carts.Length > 1)
 			{
 				// carts are sorted
-				foreach (var cart in carts)
+				foreach (var cart in carts.Where(c => !c.IsBroken))
 				{
 					cart.Move();
 					foreach (var other in carts.Except(cart.ToEnumerable())
