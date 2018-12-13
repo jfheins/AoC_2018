@@ -128,11 +128,11 @@ namespace Day_13
 			var direction = cart.MovingDirection;
 			var turnCounter = CalcTurn(cart, trackSymbol, ref direction);
 			return new Cart
-			{
-				Position = nextPosition,
-				MovingDirection = direction,
-				TurnCounter = turnCounter
-			};
+			(
+				nextPosition,
+				direction,
+				turnCounter
+			);
 		}
 
 
@@ -224,15 +224,20 @@ namespace Day_13
 			public Cart(int x, int y, char symbol)
 			{
 				Position = new Point(x, y);
-				TurnCounter = -1;
 				MovingDirection = DirectionFromSymbol(symbol);
+				TurnCounter = -1;
 			}
 
-			public Cart() { }
+			public Cart(Point pos, Direction direction, int turnCounter)
+			{
+				Position = pos;
+				MovingDirection = direction;
+				TurnCounter = turnCounter;
+			}
 
-			public int TurnCounter { get; set; }
-			public Point Position { get; set; }
-			public Direction MovingDirection { get; set; }
+			public int TurnCounter { get; }
+			public Point Position { get; }
+			public Direction MovingDirection { get; }
 
 			public Size Velocity => _mapDirectionToSize[MovingDirection];
 
