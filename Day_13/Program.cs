@@ -9,24 +9,34 @@ namespace Day_13
 {
 	internal class Program
 	{
-		private static void Main(string[] args)
+		private static void Main()
 		{
-			var input = File.ReadAllLines(@"../../../input.txt");
+			var input = File.ReadAllLines(@"../../../demo.txt");
 			var sw = new Stopwatch();
 			sw.Start();
 
 			var sim = new TrackSimulator(input);
 
 			// initial
-			Console.WriteLine($"{sim.carts.Count} carts found on map.");
+			Console.WriteLine($"{sim.Carts.Count} carts found on map.");
 
-			while (sim.carts.Count > 1)
+			while (sim.Carts.Count > 1)
 			{
 				sim.Step();
+
+				foreach (var cart in sim.Carts)
+				{
+					Console.Write($"Cart {cart.Value.MovingDirection} at {cart.Key}, ");
+				}
+
+				Console.WriteLine();
 			}
 
 			Console.WriteLine($"First crash was at {sim.crashLocations.First().location}");
-			Console.WriteLine($"Last cart is at {sim.carts.First().Key}");
+			if (sim.Carts.Any())
+			{
+				Console.WriteLine($"Last cart is at {sim.Carts.First().Key}");
+			}
 
 			sw.Stop();
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
@@ -44,14 +54,14 @@ namespace Day_13
 			Down
 		}
 
-		private readonly string[] tracks;
-		public Dictionary<Point, Cart> carts;
+		private readonly string[] _tracks;
+		public readonly Dictionary<Point, Cart> Carts;
 		private int tick;
 
 		public TrackSimulator(string[] input)
 		{
-			tracks = input.Select(ParseLineToTrack).ToArray();
-			carts = ParseCarts(input).ToDictionary(cart => cart.Position);
+			_tracks = input.Select(ParseLineToTrack).ToArray();
+			Carts = ParseCarts(input).ToDictionary(cart => cart.Position);
 		}
 
 		public ICollection<(int tick, Point location)> crashLocations { get; } = new List<(int, Point)>();
@@ -86,17 +96,17 @@ namespace Day_13
 				.Replace('v', '|');
 		}
 
-		protected char TrackSymbolAt(Point p)
+		private char TrackSymbolAt(Point p)
 		{
-			return tracks[p.Y][p.X];
+			return _tracks[p.Y][p.X];
 		}
 
 		public void Step()
 		{
 			tick++;
-			foreach (var cart in CopyAndSortCarts(carts.Values))
+			foreach (var cart in CopyAndSortCarts(Carts.Values))
 			{
-				if (carts.ContainsValue(cart))
+				if (Carts.Remove(cart.Position))
 				{
 					var newCart = Move(cart);
 					AddCartOrCrash(newCart);
@@ -106,19 +116,19 @@ namespace Day_13
 
 		private void AddCartOrCrash(Cart cart)
 		{
-			if (carts.ContainsKey(cart.Position))
+			if (Carts.ContainsKey(cart.Position))
 			{
-				carts.Remove(cart.Position);
+				Carts.Remove(cart.Position);
 				crashLocations.Add((tick, cart.Position));
 			}
 			else
 			{
-				carts.Add(cart.Position, cart);
+				Carts.Add(cart.Position, cart);
 			}
 		}
 
 
-		internal Cart Move(Cart cart)
+		private Cart Move(Cart cart)
 		{
 			var nextPosition = cart.Position + cart.Velocity;
 			var trackSymbol = TrackSymbolAt(nextPosition);
@@ -135,8 +145,15 @@ namespace Day_13
 
 		private static int CalcTurn(Cart cart, char trackSymbol, ref Direction direction)
 		{
-			Func<Direction, Direction> turnLeft = dir => (Direction) (((int) dir + 3) % 4);
-			Func<Direction, Direction> turnRight = dir => (Direction) (((int) dir + 1) % 4);
+			Direction TurnLeft(Direction dir)
+			{
+				return (Direction) (((int) dir + 3) % 4);
+			}
+
+			Direction TurnRight(Direction dir)
+			{
+				return (Direction) (((int) dir + 1) % 4);
+			}
 
 			if (trackSymbol == '/')
 			{
@@ -144,11 +161,11 @@ namespace Day_13
 				{
 					case Direction.Left:
 					case Direction.Right:
-						direction = turnLeft(direction);
+						direction = TurnLeft(direction);
 						break;
 					case Direction.Up:
 					case Direction.Down:
-						direction = turnRight(direction);
+						direction = TurnRight(direction);
 						break;
 					default:
 						throw new InvalidOperationException();
@@ -161,11 +178,11 @@ namespace Day_13
 				{
 					case Direction.Left:
 					case Direction.Right:
-						direction = turnRight(direction);
+						direction = TurnRight(direction);
 						break;
 					case Direction.Up:
 					case Direction.Down:
-						direction = turnLeft(direction);
+						direction = TurnLeft(direction);
 						break;
 					default:
 						throw new InvalidOperationException();
@@ -180,12 +197,12 @@ namespace Day_13
 			switch (cart.TurnCounter)
 			{
 				case -1:
-					direction = turnLeft(direction);
+					direction = TurnLeft(direction);
 					return 0;
 				case 0:
 					return 1;
 				case 1:
-					direction = turnRight(direction);
+					direction = TurnRight(direction);
 					return -1;
 				default:
 					throw new InvalidOperationException();
