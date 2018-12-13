@@ -5,12 +5,19 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using Core;
-using Core.Combinatorics;
 
 namespace Day_13
 {
 	internal class Program
 	{
+		public enum Direction
+		{
+			Left,
+			Up,
+			Right,
+			Down
+		}
+
 		private static void Main(string[] args)
 		{
 			var input = File.ReadAllLines(@"../../../input.txt");
@@ -18,23 +25,19 @@ namespace Day_13
 			sw.Start();
 
 			var tracks = input.Select(ParseLineToTrack).ToArray();
-			var carts = input.SelectMany(ParseCarts).ToArray();
+			var carts = SortCarts(input.SelectMany(ParseCarts);
 
 			// initial
-			foreach (var cart in carts)
-			{
-				Console.Write($"Cart {cart.Symbol} at {cart.Position}, ");
-			}
+			Console.WriteLine($"{carts.Length} carts found on map.");
 
-			Console.WriteLine();
-
-			for (var tick = 1; tick < 200000; tick++)
+			while (carts.Length > 1)
 			{
-				Console.Write($"Tick {tick}:  ");
-				foreach (var cart in carts.OrderBy(c => c.Position.X).ThenBy(c => c.Position.Y))
+				// carts are sorted
+				foreach (var cart in carts)
 				{
 					cart.Move();
-					foreach (var other in carts.Except(cart.ToEnumerable()).Where(other => cart.Position == other.Position))
+					foreach (var other in carts.Except(cart.ToEnumerable())
+						.Where(other => cart.Position == other.Position))
 					{
 						cart.IsBroken = true;
 						other.IsBroken = true;
@@ -48,22 +51,23 @@ namespace Day_13
 				foreach (var cart in carts)
 				{
 					var trackSymbol = tracks[cart.Position.Y][cart.Position.X];
-						cart.Turn(trackSymbol);
-					//Console.Write($"Cart {cart.Symbol} at {cart.Position}, ");
-				}
-				//Console.WriteLine();
-
-				if (carts.Length == 1)
-				{
-					Console.WriteLine("Only one cart left!");
-					Console.WriteLine(carts[0].Position);
-					break;
+					cart.Turn(trackSymbol);
 				}
 			}
+
+			Console.WriteLine("Only one cart left!");
+			Console.WriteLine(carts[0].Position);
 
 			sw.Stop();
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
 			Console.ReadLine();
+		}
+
+		private static Cart[] SortCarts(IEnumerable<Cart> carts)
+		{
+			return carts.OrderBy(c => c.Position.X)
+				.ThenBy(c => c.Position.Y)
+				.ToArray();
 		}
 
 		private static IEnumerable<Cart> ParseCarts(string line, int y)
@@ -137,6 +141,7 @@ namespace Day_13
 						return;
 				}
 			}
+
 			private void TurnRight()
 			{
 				switch (Symbol)
@@ -176,6 +181,7 @@ namespace Day_13
 							return;
 					}
 				}
+
 				if (trackSymbol == '\\')
 				{
 					switch (Symbol)
@@ -194,6 +200,7 @@ namespace Day_13
 							return;
 					}
 				}
+
 				if (trackSymbol == '+')
 				{
 					switch (TurnCounter)
