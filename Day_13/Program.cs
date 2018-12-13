@@ -192,12 +192,12 @@ namespace Day_13
 					{
 						case -1:
 							TurnLeft();
-							return;
+							break;
 						case 0:
-							return;
+							break;
 						case 1:
 							TurnRight();
-							return;
+							break;
 					}
 
 					TurnCounter++;
