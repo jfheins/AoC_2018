@@ -20,8 +20,17 @@ namespace Day_13
 			var tracks = input.Select(ParseLineToTrack).ToArray();
 			var carts = input.SelectMany(ParseCarts).ToArray();
 
-			for (var tick = 1; tick < 10; tick++)
+			// initial
+			foreach (var cart in carts)
 			{
+				Console.Write($"Cart {cart.Symbol} at {cart.Position}, ");
+			}
+
+			Console.WriteLine();
+
+			for (var tick = 1; tick < 20; tick++)
+			{
+				Console.Write($"Tick {tick}:  ");
 				foreach (var cart in carts.OrderBy(c => c.Position.X).ThenBy(c => c.Position.Y))
 				{
 					cart.Move();
@@ -38,8 +47,10 @@ namespace Day_13
 				{
 					var trackSymbol = tracks[cart.Position.Y][cart.Position.X];
 						cart.Turn(trackSymbol);
-					
+					Console.Write($"Cart {cart.Symbol} at {cart.Position}, ");
 				}
+
+				Console.WriteLine();
 			}
 
 			sw.Stop();
@@ -51,9 +62,9 @@ namespace Day_13
 		{
 			for (var i = 0; i < line.Length; i++)
 			{
-				if ("<^>v".Contains(line[0]))
+				if ("<^>v".Contains(line[i]))
 				{
-					yield return new Cart(i, y, line[0]);
+					yield return new Cart(i, y, line[i]);
 				}
 			}
 		}
@@ -72,8 +83,10 @@ namespace Day_13
 			{
 				Position = new Point(x, y);
 				Symbol = v;
+				TurnCounter = -1;
 			}
 
+			public int TurnCounter { get; set; }
 			public Point Position { get; set; }
 			public char Symbol { get; set; }
 			public bool IsBroken { get; set; }
@@ -93,6 +106,44 @@ namespace Day_13
 						return;
 					case 'v':
 						Position = new Point(Position.X, Position.Y + 1);
+						return;
+				}
+			}
+
+
+			private void TurnLeft()
+			{
+				switch (Symbol)
+				{
+					case '<':
+						Symbol = 'v';
+						return;
+					case '^':
+						Symbol = '<';
+						return;
+					case '>':
+						Symbol = '^';
+						return;
+					case 'v':
+						Symbol = '>';
+						return;
+				}
+			}
+			private void TurnRight()
+			{
+				switch (Symbol)
+				{
+					case '<':
+						Symbol = '^';
+						return;
+					case '^':
+						Symbol = '>';
+						return;
+					case '>':
+						Symbol = 'v';
+						return;
+					case 'v':
+						Symbol = '^';
 						return;
 				}
 			}
@@ -133,6 +184,26 @@ namespace Day_13
 						case 'v':
 							Symbol = '>';
 							return;
+					}
+				}
+				if (trackSymbol == '+')
+				{
+					switch (TurnCounter)
+					{
+						case -1:
+							TurnLeft();
+							return;
+						case 0:
+							return;
+						case 1:
+							TurnRight();
+							return;
+					}
+
+					TurnCounter++;
+					if (TurnCounter > 1)
+					{
+						TurnCounter = -1;
 					}
 				}
 			}
