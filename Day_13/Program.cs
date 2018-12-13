@@ -28,7 +28,7 @@ namespace Day_13
 
 			Console.WriteLine();
 
-			for (var tick = 1; tick < 2000; tick++)
+			for (var tick = 1; tick < 200000; tick++)
 			{
 				Console.Write($"Tick {tick}:  ");
 				foreach (var cart in carts.OrderBy(c => c.Position.X).ThenBy(c => c.Position.Y))
@@ -42,15 +42,23 @@ namespace Day_13
 					}
 				}
 
+				carts = carts.Where(c => !c.IsBroken).ToArray();
+
 				// Move around corners
 				foreach (var cart in carts)
 				{
 					var trackSymbol = tracks[cart.Position.Y][cart.Position.X];
 						cart.Turn(trackSymbol);
-					Console.Write($"Cart {cart.Symbol} at {cart.Position}, ");
+					//Console.Write($"Cart {cart.Symbol} at {cart.Position}, ");
 				}
+				//Console.WriteLine();
 
-				Console.WriteLine();
+				if (carts.Length == 1)
+				{
+					Console.WriteLine("Only one cart left!");
+					Console.WriteLine(carts[0].Position);
+					break;
+				}
 			}
 
 			sw.Stop();
