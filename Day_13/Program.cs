@@ -143,7 +143,7 @@ namespace Day_13
 						Symbol = 'v';
 						return;
 					case 'v':
-						Symbol = '^';
+						Symbol = '<';
 						return;
 				}
 			}
