@@ -11,7 +11,7 @@ namespace Day_13
 	{
 		private static void Main()
 		{
-			var input = File.ReadAllLines(@"../../../demo.txt");
+			var input = File.ReadAllLines(@"../../../input.txt");
 			var sw = new Stopwatch();
 			sw.Start();
 
@@ -23,13 +23,6 @@ namespace Day_13
 			while (sim.Carts.Count > 1)
 			{
 				sim.Step();
-
-				foreach (var cart in sim.Carts)
-				{
-					Console.Write($"Cart {cart.Value.MovingDirection} at {cart.Key}, ");
-				}
-
-				Console.WriteLine();
 			}
 
 			Console.WriteLine($"First crash was at {sim.crashLocations.First().location}");
