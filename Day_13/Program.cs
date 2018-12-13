@@ -13,7 +13,7 @@ namespace Day_13
 	{
 		private static void Main(string[] args)
 		{
-			var input = File.ReadAllLines(@"../../../demo.txt");
+			var input = File.ReadAllLines(@"../../../input.txt");
 			var sw = new Stopwatch();
 			sw.Start();
 
@@ -28,7 +28,7 @@ namespace Day_13
 
 			Console.WriteLine();
 
-			for (var tick = 1; tick < 20; tick++)
+			for (var tick = 1; tick < 2000; tick++)
 			{
 				Console.Write($"Tick {tick}:  ");
 				foreach (var cart in carts.OrderBy(c => c.Position.X).ThenBy(c => c.Position.Y))
