@@ -4,11 +4,37 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using Core;
 
 namespace Day_13
 {
 	internal class Program
+	{
+		private static void Main(string[] args)
+		{
+			var input = File.ReadAllLines(@"../../../input.txt");
+			var sw = new Stopwatch();
+			sw.Start();
+
+			var sim = new TrackSimulator(input);
+
+			// initial
+			Console.WriteLine($"{sim.carts.Count} carts found on map.");
+
+			while (sim.carts.Count > 1)
+			{
+				sim.Step();
+			}
+
+			Console.WriteLine($"First crash was at {sim.crashLocations.First().location}");
+			Console.WriteLine($"Last cart is at {sim.carts.First().Key}");
+
+			sw.Stop();
+			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
+			Console.ReadLine();
+		}
+	}
+
+	public class TrackSimulator
 	{
 		public enum Direction
 		{
@@ -18,67 +44,38 @@ namespace Day_13
 			Down
 		}
 
-		private static void Main(string[] args)
+		private readonly string[] tracks;
+		public Dictionary<Point, Cart> carts;
+		private int tick;
+
+		public TrackSimulator(string[] input)
 		{
-			var input = File.ReadAllLines(@"../../../input.txt");
-			var sw = new Stopwatch();
-			sw.Start();
-
-			var tracks = input.Select(ParseLineToTrack).ToArray();
-			var carts = SortCarts(input.SelectMany(ParseCarts);
-
-			// initial
-			Console.WriteLine($"{carts.Length} carts found on map.");
-
-			while (carts.Length > 1)
-			{
-				// carts are sorted
-				foreach (var cart in carts.Where(c => !c.IsBroken))
-				{
-					cart.Move();
-					foreach (var other in carts.Except(cart.ToEnumerable())
-						.Where(other => cart.Position == other.Position))
-					{
-						cart.IsBroken = true;
-						other.IsBroken = true;
-						Console.WriteLine($"Crash at {cart.Position}");
-					}
-				}
-
-				carts = carts.Where(c => !c.IsBroken).ToArray();
-
-				// Move around corners
-				foreach (var cart in carts)
-				{
-					var trackSymbol = tracks[cart.Position.Y][cart.Position.X];
-					cart.Turn(trackSymbol);
-				}
-			}
-
-			Console.WriteLine("Only one cart left!");
-			Console.WriteLine(carts[0].Position);
-
-			sw.Stop();
-			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
-			Console.ReadLine();
+			tracks = input.Select(ParseLineToTrack).ToArray();
+			carts = ParseCarts(input).ToDictionary(cart => cart.Position);
 		}
 
-		private static Cart[] SortCarts(IEnumerable<Cart> carts)
+		public ICollection<(int tick, Point location)> crashLocations { get; } = new List<(int, Point)>();
+
+
+		private static IEnumerable<Cart> ParseCarts(string[] input)
+		{
+			for (var y = 0; y < input.Length; y++)
+			{
+				for (var x = 0; x < input[y].Length; x++)
+				{
+					if ("<^>v".Contains(input[y][x]))
+					{
+						yield return new Cart(x, y, input[y][x]);
+					}
+				}
+			}
+		}
+
+		private static Cart[] CopyAndSortCarts(IEnumerable<Cart> carts)
 		{
 			return carts.OrderBy(c => c.Position.X)
 				.ThenBy(c => c.Position.Y)
 				.ToArray();
-		}
-
-		private static IEnumerable<Cart> ParseCarts(string line, int y)
-		{
-			for (var i = 0; i < line.Length; i++)
-			{
-				if ("<^>v".Contains(line[i]))
-				{
-					yield return new Cart(i, y, line[i]);
-				}
-			}
 		}
 
 		private static string ParseLineToTrack(string arg)
@@ -89,138 +86,149 @@ namespace Day_13
 				.Replace('v', '|');
 		}
 
+		protected char TrackSymbolAt(Point p)
+		{
+			return tracks[p.Y][p.X];
+		}
+
+		public void Step()
+		{
+			tick++;
+			foreach (var cart in CopyAndSortCarts(carts.Values))
+			{
+				if (carts.ContainsValue(cart))
+				{
+					var newCart = Move(cart);
+					AddCartOrCrash(newCart);
+				}
+			}
+		}
+
+		private void AddCartOrCrash(Cart cart)
+		{
+			if (carts.ContainsKey(cart.Position))
+			{
+				carts.Remove(cart.Position);
+				crashLocations.Add((tick, cart.Position));
+			}
+			else
+			{
+				carts.Add(cart.Position, cart);
+			}
+		}
+
+
+		internal Cart Move(Cart cart)
+		{
+			var nextPosition = cart.Position + cart.Velocity;
+			var trackSymbol = TrackSymbolAt(nextPosition);
+			var direction = cart.MovingDirection;
+			var turnCounter = CalcTurn(cart, trackSymbol, ref direction);
+			return new Cart
+			{
+				Position = nextPosition,
+				MovingDirection = direction,
+				TurnCounter = turnCounter
+			};
+		}
+
+
+		private static int CalcTurn(Cart cart, char trackSymbol, ref Direction direction)
+		{
+			Func<Direction, Direction> turnLeft = dir => (Direction) (((int) dir + 3) % 4);
+			Func<Direction, Direction> turnRight = dir => (Direction) (((int) dir + 1) % 4);
+
+			if (trackSymbol == '/')
+			{
+				switch (direction)
+				{
+					case Direction.Left:
+					case Direction.Right:
+						direction = turnLeft(direction);
+						break;
+					case Direction.Up:
+					case Direction.Down:
+						direction = turnRight(direction);
+						break;
+					default:
+						throw new InvalidOperationException();
+				}
+			}
+
+			if (trackSymbol == '\\')
+			{
+				switch (direction)
+				{
+					case Direction.Left:
+					case Direction.Right:
+						direction = turnRight(direction);
+						break;
+					case Direction.Up:
+					case Direction.Down:
+						direction = turnLeft(direction);
+						break;
+					default:
+						throw new InvalidOperationException();
+				}
+			}
+
+			if (trackSymbol != '+')
+			{
+				return cart.TurnCounter;
+			}
+
+			switch (cart.TurnCounter)
+			{
+				case -1:
+					direction = turnLeft(direction);
+					return 0;
+				case 0:
+					return 1;
+				case 1:
+					direction = turnRight(direction);
+					return -1;
+				default:
+					throw new InvalidOperationException();
+			}
+		}
+
 		public class Cart
 		{
-			public Cart(int x, int y, char v)
+			private static readonly Dictionary<char, Direction> _mapSymbolToDir = new Dictionary<char, Direction>
+			{
+				{'<', Direction.Left},
+				{'^', Direction.Up},
+				{'>', Direction.Right},
+				{'v', Direction.Down}
+			};
+
+
+			private static readonly Dictionary<Direction, Size> _mapDirectionToSize = new Dictionary<Direction, Size>
+			{
+				{Direction.Left, new Size(-1, 0)},
+				{Direction.Up, new Size(0, -1)},
+				{Direction.Right, new Size(1, 0)},
+				{Direction.Down, new Size(0, 1)}
+			};
+
+			public Cart(int x, int y, char symbol)
 			{
 				Position = new Point(x, y);
-				Symbol = v;
 				TurnCounter = -1;
+				MovingDirection = DirectionFromSymbol(symbol);
 			}
+
+			public Cart() { }
 
 			public int TurnCounter { get; set; }
 			public Point Position { get; set; }
-			public char Symbol { get; set; }
-			public bool IsBroken { get; set; }
+			public Direction MovingDirection { get; set; }
 
-			public void Move()
+			public Size Velocity => _mapDirectionToSize[MovingDirection];
+
+			private Direction DirectionFromSymbol(char symbol)
 			{
-				switch (Symbol)
-				{
-					case '<':
-						Position = new Point(Position.X - 1, Position.Y);
-						return;
-					case '^':
-						Position = new Point(Position.X, Position.Y - 1);
-						return;
-					case '>':
-						Position = new Point(Position.X + 1, Position.Y);
-						return;
-					case 'v':
-						Position = new Point(Position.X, Position.Y + 1);
-						return;
-				}
-			}
-
-
-			private void TurnLeft()
-			{
-				switch (Symbol)
-				{
-					case '<':
-						Symbol = 'v';
-						return;
-					case '^':
-						Symbol = '<';
-						return;
-					case '>':
-						Symbol = '^';
-						return;
-					case 'v':
-						Symbol = '>';
-						return;
-				}
-			}
-
-			private void TurnRight()
-			{
-				switch (Symbol)
-				{
-					case '<':
-						Symbol = '^';
-						return;
-					case '^':
-						Symbol = '>';
-						return;
-					case '>':
-						Symbol = 'v';
-						return;
-					case 'v':
-						Symbol = '<';
-						return;
-				}
-			}
-
-			public void Turn(char trackSymbol)
-			{
-				if (trackSymbol == '/')
-				{
-					switch (Symbol)
-					{
-						case '<':
-							Symbol = 'v';
-							return;
-						case '^':
-							Symbol = '>';
-							return;
-						case '>':
-							Symbol = '^';
-							return;
-						case 'v':
-							Symbol = '<';
-							return;
-					}
-				}
-
-				if (trackSymbol == '\\')
-				{
-					switch (Symbol)
-					{
-						case '<':
-							Symbol = '^';
-							return;
-						case '^':
-							Symbol = '<';
-							return;
-						case '>':
-							Symbol = 'v';
-							return;
-						case 'v':
-							Symbol = '>';
-							return;
-					}
-				}
-
-				if (trackSymbol == '+')
-				{
-					switch (TurnCounter)
-					{
-						case -1:
-							TurnLeft();
-							break;
-						case 0:
-							break;
-						case 1:
-							TurnRight();
-							break;
-					}
-
-					TurnCounter++;
-					if (TurnCounter > 1)
-					{
-						TurnCounter = -1;
-					}
-				}
+				return _mapSymbolToDir[symbol];
 			}
 		}
 	}
