@@ -221,6 +221,7 @@ namespace Day_13
 				{Direction.Down, new Size(0, 1)}
 			};
 
+
 			public Cart(int x, int y, char symbol)
 			{
 				Position = new Point(x, y);
@@ -241,7 +242,7 @@ namespace Day_13
 
 			public Size Velocity => _mapDirectionToSize[MovingDirection];
 
-			private Direction DirectionFromSymbol(char symbol)
+			private static Direction DirectionFromSymbol(char symbol)
 			{
 				return _mapSymbolToDir[symbol];
 			}
