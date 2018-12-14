@@ -10,7 +10,7 @@ namespace Day_14
 	{
 		private static void Main()
 		{
-			var input = 10;//503761;
+			var input = 503761;//503761;
 			var sampleSize = 10;
 			var sw = new Stopwatch();
 			sw.Start();
@@ -21,17 +21,20 @@ namespace Day_14
 			var elf2 = 1;
 			while (scoreboard.Count < input + sampleSize)
 			{
-				foreach (var score in scoreboard)
-				{
-					Console.Write($"{score} ");
-				}
-				Console.WriteLine();
+				//foreach (var score in scoreboard)
+				//{
+				//	Console.Write($"{score} ");
+				//}
+				//Console.WriteLine();
 				var newScore = scoreboard[elf1] + scoreboard[elf2];
 				var digits = newScore.ToString().Select(t => int.Parse(t.ToString())).ToArray();
 				scoreboard.AddRange(digits);
 				elf1 = (elf1 + 1 +scoreboard[elf1]) % scoreboard.Count;
 				elf2 = (elf2 + 1 +scoreboard[elf2]) % scoreboard.Count;
 			}
+
+			var result = string.Concat(scoreboard.Skip(input).Take(sampleSize).Select(score => score.ToString()));
+			Console.WriteLine(result);
 
 			sw.Stop();
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
