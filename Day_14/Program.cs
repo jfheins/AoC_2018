@@ -26,7 +26,7 @@ namespace Day_14
 					Console.Write($"{score} ");
 				}
 				Console.WriteLine();
-				var newScore = scoreboard[elf1] + scoreboard[elf1];
+				var newScore = scoreboard[elf1] + scoreboard[elf2];
 				var digits = newScore.ToString().Select(t => int.Parse(t.ToString())).ToArray();
 				scoreboard.AddRange(digits);
 				elf1 = (elf1 + 1 +scoreboard[elf1]) % scoreboard.Count;
