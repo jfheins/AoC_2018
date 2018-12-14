@@ -28,7 +28,7 @@ namespace Day_13
 			Console.WriteLine($"First crash was at {sim.crashLocations.First().location}");
 			if (sim.Carts.Any())
 			{
-				Console.WriteLine($"Last cart is at {sim.Carts.First().Key}");
+				Console.WriteLine($"Last cart is at {sim.Carts.First().Position}");
 			}
 
 			sw.Stop();
@@ -48,13 +48,13 @@ namespace Day_13
 		}
 
 		private readonly string[] _tracks;
-		public readonly Dictionary<Point, Cart> Carts;
+		public readonly List<Cart> Carts;
 		private int tick;
 
 		public TrackSimulator(string[] input)
 		{
 			_tracks = input.Select(ParseLineToTrack).ToArray();
-			Carts = ParseCarts(input).ToDictionary(cart => cart.Position);
+			Carts = ParseCarts(input).ToList();
 		}
 
 		public ICollection<(int tick, Point location)> crashLocations { get; } = new List<(int, Point)>();
@@ -97,109 +97,26 @@ namespace Day_13
 		public void Step()
 		{
 			tick++;
-			foreach (var cart in CopyAndSortCarts(Carts.Values))
+			foreach (var cart in CopyAndSortCarts(Carts))
 			{
-				if (Carts.Remove(cart.Position))
+				cart.Move();
+				if (CartCrashes(cart))
 				{
-					var newCart = Move(cart);
-					AddCartOrCrash(newCart);
+					Carts.RemoveAll(c => c.Position == cart.Position);
+					crashLocations.Add((tick, cart.Position));
+				}
+				else
+				{
+					cart.Turn(TrackSymbolAt(cart.Position));
 				}
 			}
 		}
 
-		private void AddCartOrCrash(Cart cart)
+		private bool CartCrashes(Cart cart)
 		{
-			if (Carts.ContainsKey(cart.Position))
-			{
-				Carts.Remove(cart.Position);
-				crashLocations.Add((tick, cart.Position));
-			}
-			else
-			{
-				Carts.Add(cart.Position, cart);
-			}
-		}
-
-
-		private Cart Move(Cart cart)
-		{
-			var nextPosition = cart.Position + cart.Velocity;
-			var trackSymbol = TrackSymbolAt(nextPosition);
-			var direction = cart.MovingDirection;
-			var turnCounter = CalcTurn(cart, trackSymbol, ref direction);
-			return new Cart
-			(
-				nextPosition,
-				direction,
-				turnCounter
-			);
-		}
-
-
-		private static int CalcTurn(Cart cart, char trackSymbol, ref Direction direction)
-		{
-			Direction TurnLeft(Direction dir)
-			{
-				return (Direction) (((int) dir + 3) % 4);
-			}
-
-			Direction TurnRight(Direction dir)
-			{
-				return (Direction) (((int) dir + 1) % 4);
-			}
-
-			if (trackSymbol == '/')
-			{
-				switch (direction)
-				{
-					case Direction.Left:
-					case Direction.Right:
-						direction = TurnLeft(direction);
-						break;
-					case Direction.Up:
-					case Direction.Down:
-						direction = TurnRight(direction);
-						break;
-					default:
-						throw new InvalidOperationException();
-				}
-			}
-
-			if (trackSymbol == '\\')
-			{
-				switch (direction)
-				{
-					case Direction.Left:
-					case Direction.Right:
-						direction = TurnRight(direction);
-						break;
-					case Direction.Up:
-					case Direction.Down:
-						direction = TurnLeft(direction);
-						break;
-					default:
-						throw new InvalidOperationException();
-				}
-			}
-
-			if (trackSymbol != '+')
-			{
-				return cart.TurnCounter;
-			}
-
-			switch (cart.TurnCounter)
-			{
-				case -1:
-					direction = TurnLeft(direction);
-					return 0;
-				case 0:
-					return 1;
-				case 1:
-					direction = TurnRight(direction);
-					return -1;
-				default:
-					throw new InvalidOperationException();
-			}
+			return Carts
+				.Where(c => c != cart)
+				.Any(c => c.Position == cart.Position);
 		}
 
 		public class Cart
@@ -229,22 +146,90 @@ namespace Day_13
 				TurnCounter = -1;
 			}
 
-			public Cart(Point pos, Direction direction, int turnCounter)
-			{
-				Position = pos;
-				MovingDirection = direction;
-				TurnCounter = turnCounter;
-			}
-
-			public int TurnCounter { get; }
-			public Point Position { get; }
-			public Direction MovingDirection { get; }
+			public int TurnCounter { get; private set; }
+			public Point Position { get; private set; }
+			public Direction MovingDirection { get; private set; }
 
 			public Size Velocity => _mapDirectionToSize[MovingDirection];
 
 			private static Direction DirectionFromSymbol(char symbol)
 			{
 				return _mapSymbolToDir[symbol];
+			}
+
+			public void Move()
+			{
+				Position += Velocity;
+			}
+
+			private void TurnLeft()
+			{
+				MovingDirection = (Direction) (((int) MovingDirection + 3) % 4);
+			}
+
+			private void TurnRight()
+			{
+				MovingDirection = (Direction) (((int) MovingDirection + 1) % 4);
+			}
+
+			public void Turn(char trackSymbol)
+			{
+				if (trackSymbol == '/')
+				{
+					switch (MovingDirection)
+					{
+						case Direction.Left:
+						case Direction.Right:
+							TurnLeft();
+							break;
+						case Direction.Up:
+						case Direction.Down:
+							TurnRight();
+							break;
+						default:
+							throw new InvalidOperationException();
+					}
+				}
+
+				if (trackSymbol == '\\')
+				{
+					switch (MovingDirection)
+					{
+						case Direction.Left:
+						case Direction.Right:
+							TurnRight();
+							break;
+						case Direction.Up:
+						case Direction.Down:
+							TurnLeft();
+							break;
+						default:
+							throw new InvalidOperationException();
+					}
+				}
+
+				if (trackSymbol == '+')
+				{
+					switch (TurnCounter)
+					{
+						case -1:
+							TurnLeft();
+							break;
+						case 0:
+							break;
+						case 1:
+							TurnRight();
+							break;
+						default:
+							throw new InvalidOperationException();
+					}
+
+					TurnCounter++;
+					if (TurnCounter > 1)
+					{
+						TurnCounter = -1;
+					}
+				}
 			}
 		}
 	}
