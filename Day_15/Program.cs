@@ -16,9 +16,14 @@ namespace Day_15
 			var sw = new Stopwatch();
 			sw.Start();
 
+			var sim = new BattleSimulator(input);
+			while (sim.Step())
+			{
+				Console.WriteLine($"Step {sim.Rounds} fought, {sim.Players.Count} players left");
+			}
 
-			Console.WriteLine($"Part 1: ");
-			Console.WriteLine($"Part 2: ");
+			Console.WriteLine($"Part 1: {sim.Rounds}");
+			Console.WriteLine("Part 2: ");
 
 			sw.Stop();
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
@@ -46,7 +51,7 @@ namespace Day_15
 		};
 
 		private readonly string[] _cave;
-		private BreadthFirstSearch<Point, Direction> _bfs;
+		private readonly BreadthFirstSearch<Point, Direction> _bfs;
 
 		public BattleSimulator(string[] input)
 		{
@@ -59,9 +64,9 @@ namespace Day_15
 		}
 
 		public Rectangle CaveBounds { get; }
-		public List<Player> Players { get; set; }
+		public List<Player> Players { get; }
 
-		public int Round { get; private set; }
+		public int Rounds { get; private set; }
 
 		private string ParseLineToCave(string arg)
 		{
@@ -85,7 +90,9 @@ namespace Day_15
 
 		private bool IsWalkable(Point p)
 		{
-			return CaveBounds.Contains(p) && _cave[p.Y][p.X] == '.';
+			return CaveBounds.Contains(p)
+				   && Players.All(player => player.Position != p)
+				   && _cave[p.Y][p.X] == '.';
 		}
 
 		private static Player[] CopyAndSortPlayers(IEnumerable<Player> players)
@@ -95,11 +102,19 @@ namespace Day_15
 				.ToArray();
 		}
 
-
+		/// <summary>
+		/// Does a time step in the combat
+		/// </summary>
+		/// <returns>Whether this was a "full step" or not</returns>
 		public bool Step()
 		{
 			foreach (var player in CopyAndSortPlayers(Players))
 			{
+				if (player.HitPoints <= 0)
+				{
+					continue;
+				}
+
 				var possibleTargets = Players.Where(p => p.Symbol != player.Symbol).ToList();
 				if (!possibleTargets.Any())
 				{
@@ -109,17 +124,26 @@ namespace Day_15
 				var adjacentTargets = possibleTargets.Where(target => AreAdjacent(player, target)).ToList();
 				if (adjacentTargets.Any())
 				{
-					player.FightOneOf(adjacentTargets);
+					player.AttackOneOf(adjacentTargets);
 				}
 				else
 				{
-					var targetPositions = possibleTargets
+					var positionsInRange = new HashSet<Point>(possibleTargets
 						.SelectMany(t => GetAdjacentPoints(t.Position))
-						.Where(IsWalkable);
+						.Where(IsWalkable));
+					var nearReachablePositions =
+						_bfs.FindAll(player.Position, p => positionsInRange.Contains(p), null, 1);
+					var firstInReadingOrder = nearReachablePositions
+						.OrderBy(path => path.Target.Y)
+						.ThenBy(path => path.Target.X)
+						.First();
+					player.StepTowards(firstInReadingOrder.Target);
 				}
+
+				Players.RemoveAll(p => p.HitPoints <= 0);
 			}
 
-			Round++;
+			Rounds++;
 			return true;
 		}
 
@@ -149,7 +173,10 @@ namespace Day_15
 				Symbol = symbol;
 				Position = new Point(x, y);
 				HitPoints = 200;
+				AttackPower = 3;
 			}
+
+			public int AttackPower { get; }
 
 			public char Symbol { get; }
 
@@ -160,9 +187,47 @@ namespace Day_15
 
 			public Point Position { get; set; }
 
-			public void FightOneOf(List<Player> adjacentTargets)
+			public void AttackOneOf(List<Player> adjacentTargets)
 			{
-				throw new NotImplementedException();
+				if (!adjacentTargets.Any())
+				{
+					// Nothing to attack
+					return;
+				}
+
+				var victim = adjacentTargets
+					.OrderBy(t => t.HitPoints)
+					.ThenBy(t => t.Position.Y)
+					.ThenBy(t => t.Position.X)
+					.First();
+				victim.HitPoints -= AttackPower;
+			}
+
+			public void StepTowards(Point target)
+			{
+				// Move up
+				if (target.Y < Position.Y)
+				{
+					Position += _mapDirectionToSize[Direction.Up];
+				}
+
+				// Move left
+				if (target.X < Position.X)
+				{
+					Position += _mapDirectionToSize[Direction.Left];
+				}
+
+				// Move right
+				if (target.X > Position.X)
+				{
+					Position += _mapDirectionToSize[Direction.Right];
+				}
+
+				// Move down
+				if (target.Y > Position.Y)
+				{
+					Position += _mapDirectionToSize[Direction.Down];
+				}
 			}
 		}
 	}
