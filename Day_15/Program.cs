@@ -12,14 +12,15 @@ namespace Day_15
 	{
 		private static void Main(string[] args)
 		{
-			var input = File.ReadAllLines(@"../../../input.txt");
+			var input = File.ReadAllLines(@"../../../demo.txt");
 			var sw = new Stopwatch();
 			sw.Start();
 
 			var sim = new BattleSimulator(input);
-			while (sim.Step())
+			while (sim.Step() && sim.Rounds < 49)
 			{
 				Console.WriteLine($"Step {sim.Rounds} fought, {sim.Players.Count} players left");
+				Console.WriteLine(sim.ToString());
 			}
 
 			Console.WriteLine($"Part 1: {sim.Rounds}");
@@ -50,8 +51,9 @@ namespace Day_15
 			{Direction.Down, new Size(0, 1)}
 		};
 
-		private readonly string[] _cave;
 		private readonly BreadthFirstSearch<Point, Direction> _bfs;
+
+		private readonly string[] _cave;
 
 		public BattleSimulator(string[] input)
 		{
@@ -103,7 +105,7 @@ namespace Day_15
 		}
 
 		/// <summary>
-		/// Does a time step in the combat
+		///     Does a time step in the combat
 		/// </summary>
 		/// <returns>Whether this was a "full step" or not</returns>
 		public bool Step()
@@ -131,13 +133,18 @@ namespace Day_15
 					var positionsInRange = new HashSet<Point>(possibleTargets
 						.SelectMany(t => GetAdjacentPoints(t.Position))
 						.Where(IsWalkable));
-					var nearReachablePositions =
-						_bfs.FindAll(player.Position, p => positionsInRange.Contains(p), null, 1);
-					var firstInReadingOrder = nearReachablePositions
-						.OrderBy(path => path.Target.Y)
-						.ThenBy(path => path.Target.X)
-						.First();
-					player.StepTowards(firstInReadingOrder.Target);
+
+					var nearReachablePositions = _bfs.FindAll(player.Position,
+						p => positionsInRange.Contains(p), null, 1);
+
+					if (nearReachablePositions.Any())
+					{
+						var firstInReadingOrder = nearReachablePositions
+							.OrderBy(path => path.Target.Y)
+							.ThenBy(path => path.Target.X)
+							.First();
+						player.StepTowards(firstInReadingOrder.Target);
+					}
 				}
 
 				Players.RemoveAll(p => p.HitPoints <= 0);
@@ -163,6 +170,17 @@ namespace Day_15
 		private int GetDistance(Point a, Point b)
 		{
 			return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
+		}
+
+		public override string ToString()
+		{
+			var res = _cave.Select(s => s.ToCharArray()).ToArray();
+			foreach (var player in Players)
+			{
+				res[player.Position.Y][player.Position.X] = player.Symbol;
+			}
+
+			return string.Concat(res.Select(arr => string.Concat(arr) + "\r\n"));
 		}
 
 		public class Player
