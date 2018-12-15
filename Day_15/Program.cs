@@ -124,11 +124,7 @@ namespace Day_15
 				}
 
 				var adjacentTargets = possibleTargets.Where(target => AreAdjacent(player, target)).ToList();
-				if (adjacentTargets.Any())
-				{
-					player.AttackOneOf(adjacentTargets);
-				}
-				else
+				if (!adjacentTargets.Any())
 				{
 					var positionsInRange = new HashSet<Point>(possibleTargets
 						.SelectMany(t => GetAdjacentPoints(t.Position))
@@ -144,7 +140,12 @@ namespace Day_15
 							.ThenBy(path => path.Target.X)
 							.First();
 						player.StepTowards(firstInReadingOrder.Target);
+						adjacentTargets = possibleTargets.Where(target => AreAdjacent(player, target)).ToList();
 					}
+				}
+				if (adjacentTargets.Any())
+				{
+					player.AttackOneOf(adjacentTargets);
 				}
 
 				Players.RemoveAll(p => p.HitPoints <= 0);
