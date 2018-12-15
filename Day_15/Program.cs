@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using Core;
+using MoreLinq.Extensions;
 
 namespace Day_15
 {
@@ -20,7 +21,7 @@ namespace Day_15
 			while (sim.Step() && sim.Rounds < 49)
 			{
 				Console.WriteLine($"Step {sim.Rounds} fought, {sim.Players.Count} players left");
-				Console.WriteLine(sim.ToString());
+				//Console.WriteLine(sim.ToString());
 			}
 
 			Console.WriteLine($"Part 1: {sim.Rounds * sim.Players.Sum(p => p.HitPoints)}");
@@ -51,8 +52,6 @@ namespace Day_15
 			{Direction.Down, new Size(0, 1)}
 		};
 
-		private readonly BreadthFirstSearch<Point, Direction> _bfs;
-
 		private readonly string[] _cave;
 
 		public BattleSimulator(string[] input)
@@ -60,15 +59,13 @@ namespace Day_15
 			_cave = input.Select(ParseLineToCave).ToArray();
 			Players = ParsePlayers(input).ToList();
 			CaveBounds = new Rectangle(0, 0, _cave[0].Length, _cave.Length);
-			_bfs = new BreadthFirstSearch<Point, Direction>(
-				EqualityComparer<Point>.Default,
-				point => GetAdjacentPoints(point).Where(IsWalkable));
 		}
 
 		public Rectangle CaveBounds { get; }
 		public List<Player> Players { get; }
 
 		public int Rounds { get; private set; }
+		public int HitPointSum => Players.Sum(p => p.HitPoints);
 
 		private string ParseLineToCave(string arg)
 		{
@@ -130,15 +127,23 @@ namespace Day_15
 						.SelectMany(t => GetAdjacentPoints(t.Position))
 						.Where(IsWalkable));
 
-					var nearReachablePositions = _bfs.FindAll(player.Position,
+					var walkable = new Dictionary<Point, bool>( Enumerable.Range(0, CaveBounds.Width)
+						.Cartesian(Enumerable.Range(0, CaveBounds.Height), (x, y) =>
+						{
+							var p = new Point(x, y);
+							return new KeyValuePair<Point,bool>(p, IsWalkable(p));
+						}));
+
+					var bfs = new BreadthFirstSearch<Point, Direction>(
+						EqualityComparer<Point>.Default,
+						point => GetAdjacentPoints(point)
+							.Where(p => walkable[p]));
+
+					var nearReachablePositions = bfs.FindAll(player.Position,
 						p => positionsInRange.Contains(p), null, 1);
 
 					if (nearReachablePositions.Any())
 					{
-						if (nearReachablePositions.Count > 1)
-						{
-							Console.WriteLine("x");
-						}
 						var firstInReadingOrder = nearReachablePositions
 							.OrderBy(path => path.Target.Y)
 							.ThenBy(path => path.Target.X)
