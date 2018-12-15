@@ -13,18 +13,18 @@ namespace Day_15
 	{
 		private static void Main(string[] args)
 		{
-			var input = File.ReadAllLines(@"../../../demo.txt");
+			var input = File.ReadAllLines(@"../../../input.txt");
 			var sw = new Stopwatch();
 			sw.Start();
 
 			var sim = new BattleSimulator(input);
-			while (sim.Step() && sim.Rounds < 49)
+			while (sim.Step() && sim.Rounds < 10000)
 			{
 				Console.WriteLine($"Step {sim.Rounds} fought, {sim.Players.Count} players left");
 				//Console.WriteLine(sim.ToString());
 			}
 
-			Console.WriteLine($"Part 1: {sim.Rounds * sim.Players.Sum(p => p.HitPoints)}");
+			Console.WriteLine($"Part 1: {sim.Rounds * sim.HitPointSum}");
 			Console.WriteLine("Part 2: ");
 
 			sw.Stop();
