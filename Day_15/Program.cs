@@ -21,8 +21,14 @@ namespace Day_15
 			{
 				var sim = new BattleSimulator(input, elfPower);
 				var elfCount = sim.Players.Count(p => p.IsElf);
+
+				Console.WriteLine(sim.ToString());
+				Console.WriteLine();
+
 				while (sim.Step())
 				{
+						Console.WriteLine(sim.ToString());
+						Console.WriteLine();
 					if (sim.Players.Count(player => player.IsElf) < elfCount)
 					{
 						Console.WriteLine("At least one elf died :-(");
@@ -65,6 +71,7 @@ namespace Day_15
 
 		private readonly string[] _cave;
 		private readonly Dictionary<Point, bool> _walkable;
+		private BreadthFirstSearch<Point, Direction> _bfs;
 
 		public BattleSimulator(string[] input, int elfAttack = 3)
 		{
@@ -78,6 +85,11 @@ namespace Day_15
 					var p = new Point(x, y);
 					return new KeyValuePair<Point, bool>(p, IsWalkable(p));
 				}));
+
+			_bfs = new BreadthFirstSearch<Point, Direction>(
+				EqualityComparer<Point>.Default,
+				point => GetAdjacentPoints(point)
+					.Where(p => _walkable[p]));
 		}
 
 		public Rectangle CaveBounds { get; }
@@ -150,26 +162,23 @@ namespace Day_15
 						.SelectMany(t => GetAdjacentPoints(t.Position))
 						.Where(IsWalkable));
 
-
-					var bfs = new BreadthFirstSearch<Point, Direction>(
-						EqualityComparer<Point>.Default,
-						point => GetAdjacentPoints(point)
-							.Where(p => _walkable[p]));
-
-					var nearReachablePositions = bfs.FindAll(player.Position,
-						p => positionsInRange.Contains(p), null, 1);
+					var nearReachablePositions = GetAdjacentPoints(player.Position)
+						.Where(IsWalkable)
+						.SelectMany(firstStep => _bfs.FindAll(firstStep,
+							p => positionsInRange.Contains(p), null, 1))
+						.ToList();
 
 					if (nearReachablePositions.Any())
 					{
+						// As the first step was expanded manually, we have to select the shortest path from those
 						var firstInReadingOrder = nearReachablePositions
-							.OrderBy(path => path.Target.Y)
+							.OrderBy(path => path.Length)
+							.ThenBy(path => path.Target.Y)
 							.ThenBy(path => path.Target.X)
-							.ThenBy(path => path.Steps[1].Y)
-							.ThenBy(path => path.Steps[1].X)
 							.First();
-						var targetSquare = firstInReadingOrder.Steps[1];
+						var targetSquare = firstInReadingOrder.Steps[0];
 						var oldPosition = player.Position;
-						player.StepTowards(targetSquare);
+						player.StepTo(targetSquare);
 						adjacentTargets = possibleTargets.Where(target => AreAdjacent(player, target)).ToList();
 
 						RefreshCache(oldPosition);
@@ -201,8 +210,8 @@ namespace Day_15
 
 		private IEnumerable<Point> GetAdjacentPoints(Point p)
 		{
-			yield return p + _mapDirectionToSize[Direction.Left];
 			yield return p + _mapDirectionToSize[Direction.Up];
+			yield return p + _mapDirectionToSize[Direction.Left];
 			yield return p + _mapDirectionToSize[Direction.Right];
 			yield return p + _mapDirectionToSize[Direction.Down];
 		}
@@ -263,6 +272,11 @@ namespace Day_15
 					.First();
 				victim.HitPoints -= AttackPower;
 				return victim;
+			}
+
+			public void StepTo(Point target)
+			{
+				Position = target;
 			}
 
 			public void StepTowards(Point target)
