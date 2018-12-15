@@ -23,7 +23,7 @@ namespace Day_15
 				Console.WriteLine(sim.ToString());
 			}
 
-			Console.WriteLine($"Part 1: {sim.Rounds}");
+			Console.WriteLine($"Part 1: {sim.Rounds * sim.Players.Sum(p => p.HitPoints)}");
 			Console.WriteLine("Part 2: ");
 
 			sw.Stop();
@@ -90,7 +90,7 @@ namespace Day_15
 			}
 		}
 
-		private bool IsWalkable(Point p)
+		public bool IsWalkable(Point p)
 		{
 			return CaveBounds.Contains(p)
 				   && Players.All(player => player.Position != p)
@@ -135,13 +135,19 @@ namespace Day_15
 
 					if (nearReachablePositions.Any())
 					{
+						if (nearReachablePositions.Count > 1)
+						{
+							Console.WriteLine("x");
+						}
 						var firstInReadingOrder = nearReachablePositions
 							.OrderBy(path => path.Target.Y)
 							.ThenBy(path => path.Target.X)
+							.ThenBy(path => path.Steps[1].Y)
+							.ThenBy(path => path.Steps[1].X)
 							.First();
-						player.StepTowards(firstInReadingOrder.Target);
-						adjacentTargets = possibleTargets.Where(target => AreAdjacent(player, target)).ToList();
-					}
+						player.StepTowards(firstInReadingOrder.Steps[1]);
+							adjacentTargets = possibleTargets.Where(target => AreAdjacent(player, target)).ToList();
+						}
 				}
 				if (adjacentTargets.Any())
 				{
