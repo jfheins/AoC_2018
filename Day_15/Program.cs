@@ -17,18 +17,13 @@ namespace Day_15
 			var sw = new Stopwatch();
 			sw.Start();
 
-			for (int elfPower = 4; elfPower < 20; elfPower++)
+			for (int elfPower = 3; elfPower < 20; elfPower++)
 			{
 				var sim = new BattleSimulator(input, elfPower);
 				var elfCount = sim.Players.Count(p => p.IsElf);
-
-				Console.WriteLine(sim.ToString());
-				Console.WriteLine();
-
+				
 				while (sim.Step())
 				{
-						Console.WriteLine(sim.ToString());
-						Console.WriteLine();
 					if (sim.Players.Count(player => player.IsElf) < elfCount)
 					{
 						Console.WriteLine("At least one elf died :-(");
@@ -189,9 +184,9 @@ namespace Day_15
 				if (adjacentTargets.Any())
 				{
 					var victim = player.AttackOneOf(adjacentTargets);
+					Players.RemoveAll(p => p.HitPoints <= 0);
+					RefreshCache(victim.Position);
 				}
-
-				Players.RemoveAll(p => p.HitPoints <= 0);
 			}
 
 			Rounds++;
