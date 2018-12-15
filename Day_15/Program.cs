@@ -17,15 +17,25 @@ namespace Day_15
 			var sw = new Stopwatch();
 			sw.Start();
 
-			var sim = new BattleSimulator(input);
-			while (sim.Step() && sim.Rounds < 10000)
+			var result = Enumerable.Range(5, 8).Select(power =>
 			{
-				Console.WriteLine($"Step {sim.Rounds} fought, {sim.Players.Count} players left");
-				//Console.WriteLine(sim.ToString());
+				var sim = new BattleSimulator(input, power);
+				while (sim.Step() && sim.Rounds < 200)
+				{
+					//Console.WriteLine($"Step {sim.Rounds} fought, {sim.Players.Count} players left");
+				}
+
+				return (sim.Players.First().Symbol, sim.Rounds * sim.HitPointSum, power);
+			});
+
+			foreach (var game in result)
+			{
+				Console.WriteLine($"Remaining: {game.Item1} ");
+				Console.WriteLine($"Score: {game.Item2}");
+				Console.WriteLine($"Power: {game.Item3}");
+				Console.WriteLine();
 			}
 
-			Console.WriteLine($"Part 1: {sim.Rounds * sim.HitPointSum}");
-			Console.WriteLine("Part 2: ");
 
 			sw.Stop();
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
