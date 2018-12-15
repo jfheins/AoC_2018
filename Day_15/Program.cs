@@ -53,12 +53,20 @@ namespace Day_15
 		};
 
 		private readonly string[] _cave;
+		private readonly Dictionary<Point, bool> _walkable;
 
-		public BattleSimulator(string[] input)
+		public BattleSimulator(string[] input, int elfAttack = 3)
 		{
 			_cave = input.Select(ParseLineToCave).ToArray();
-			Players = ParsePlayers(input).ToList();
+			Players = ParsePlayers(input, elfAttack).ToList();
 			CaveBounds = new Rectangle(0, 0, _cave[0].Length, _cave.Length);
+
+			_walkable = new Dictionary<Point, bool>(Enumerable.Range(0, CaveBounds.Width)
+				.Cartesian(Enumerable.Range(0, CaveBounds.Height), (x, y) =>
+				{
+					var p = new Point(x, y);
+					return new KeyValuePair<Point, bool>(p, IsWalkable(p));
+				}));
 		}
 
 		public Rectangle CaveBounds { get; }
@@ -73,21 +81,25 @@ namespace Day_15
 				.Replace('G', '.');
 		}
 
-		private static IEnumerable<Player> ParsePlayers(string[] input)
+		private static IEnumerable<Player> ParsePlayers(string[] input, int elfAttack)
 		{
 			for (var y = 0; y < input.Length; y++)
 			{
 				for (var x = 0; x < input[y].Length; x++)
 				{
-					if ("GE".Contains(input[y][x]))
+					if (input[y][x] == 'G')
 					{
 						yield return new Player(x, y, input[y][x]);
+					}
+					else if (input[y][x] == 'E')
+					{
+						yield return new Player(x, y, input[y][x], elfAttack);
 					}
 				}
 			}
 		}
 
-		public bool IsWalkable(Point p)
+		private bool IsWalkable(Point p)
 		{
 			return CaveBounds.Contains(p)
 				   && Players.All(player => player.Position != p)
@@ -127,17 +139,11 @@ namespace Day_15
 						.SelectMany(t => GetAdjacentPoints(t.Position))
 						.Where(IsWalkable));
 
-					var walkable = new Dictionary<Point, bool>( Enumerable.Range(0, CaveBounds.Width)
-						.Cartesian(Enumerable.Range(0, CaveBounds.Height), (x, y) =>
-						{
-							var p = new Point(x, y);
-							return new KeyValuePair<Point,bool>(p, IsWalkable(p));
-						}));
 
 					var bfs = new BreadthFirstSearch<Point, Direction>(
 						EqualityComparer<Point>.Default,
 						point => GetAdjacentPoints(point)
-							.Where(p => walkable[p]));
+							.Where(p => _walkable[p]));
 
 					var nearReachablePositions = bfs.FindAll(player.Position,
 						p => positionsInRange.Contains(p), null, 1);
@@ -150,13 +156,19 @@ namespace Day_15
 							.ThenBy(path => path.Steps[1].Y)
 							.ThenBy(path => path.Steps[1].X)
 							.First();
-						player.StepTowards(firstInReadingOrder.Steps[1]);
-							adjacentTargets = possibleTargets.Where(target => AreAdjacent(player, target)).ToList();
-						}
+						var targetSquare = firstInReadingOrder.Steps[1];
+						var oldPosition = player.Position;
+						player.StepTowards(targetSquare);
+						adjacentTargets = possibleTargets.Where(target => AreAdjacent(player, target)).ToList();
+
+						RefreshCache(oldPosition);
+						RefreshCache(player.Position);
+					}
 				}
+
 				if (adjacentTargets.Any())
 				{
-					player.AttackOneOf(adjacentTargets);
+					var victim = player.AttackOneOf(adjacentTargets);
 				}
 
 				Players.RemoveAll(p => p.HitPoints <= 0);
@@ -164,6 +176,11 @@ namespace Day_15
 
 			Rounds++;
 			return true;
+		}
+
+		private void RefreshCache(Point p)
+		{
+			_walkable[p] = IsWalkable(p);
 		}
 
 		private bool AreAdjacent(Player a, Player b)
@@ -197,13 +214,16 @@ namespace Day_15
 
 		public class Player
 		{
-			public Player(int x, int y, char symbol)
+			public Player(int x,
+						  int y,
+						  char symbol,
+						  int attack = 3)
 			{
 				Debug.Assert(symbol == 'E' || symbol == 'G');
 				Symbol = symbol;
 				Position = new Point(x, y);
 				HitPoints = 200;
-				AttackPower = 3;
+				AttackPower = attack;
 			}
 
 			public int AttackPower { get; }
@@ -217,12 +237,12 @@ namespace Day_15
 
 			public Point Position { get; set; }
 
-			public void AttackOneOf(List<Player> adjacentTargets)
+			public Player AttackOneOf(List<Player> adjacentTargets)
 			{
 				if (!adjacentTargets.Any())
 				{
 					// Nothing to attack
-					return;
+					return null;
 				}
 
 				var victim = adjacentTargets
@@ -231,6 +251,7 @@ namespace Day_15
 					.ThenBy(t => t.Position.X)
 					.First();
 				victim.HitPoints -= AttackPower;
+				return victim;
 			}
 
 			public void StepTowards(Point target)
