@@ -13,25 +13,25 @@ namespace Day_15
 			var sw = new Stopwatch();
 			sw.Start();
 
-			for (var elfPower = 3; elfPower < 20; elfPower++)
+			for (var elfPower = 4; elfPower < 20; elfPower++)
 			{
 				var sim = new BattleSimulator(input, elfPower);
-				var elfCount = sim.Players.Count(p => p.IsElf);
 
-				while (sim.Step())
+				while (sim.Step(stopOnElfDeath: true))
 				{
-					if (sim.Players.Count(player => player.IsElf) < elfCount)
-					{
-						Console.WriteLine("At least one elf died :-(");
-						break;
-					}
 				}
 
 				Console.WriteLine($"Elf power: {elfPower}");
-				Console.WriteLine($"Remaining: {sim.Players.First().Symbol} ");
+				Console.WriteLine($"Ended because: {sim.TerminationReason}");
+				Console.WriteLine($"Winning side: {sim.Winners}");
 				Console.WriteLine($"Outcome: {sim.Rounds * sim.HitPointSum}");
 				Console.WriteLine($"Rounds: {sim.Rounds}");
 				Console.WriteLine();
+
+				if (sim.Winners == "E")
+				{
+					break;
+				}
 			}
 
 

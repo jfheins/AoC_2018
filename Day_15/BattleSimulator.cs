@@ -26,9 +26,13 @@ namespace Day_15
 			{Direction.Down, new Size(0, 1)}
 		};
 
+		private readonly BreadthFirstSearch<Point, Direction> _bfs;
+
 		private readonly string[] _cave;
 		private readonly Dictionary<Point, bool> _walkable;
-		private readonly BreadthFirstSearch<Point, Direction> _bfs;
+		public string TerminationReason { get; private set; } = "";
+		public string Winners { get; private set; } = "";
+
 
 		public BattleSimulator(string[] input, int elfAttack = 3)
 		{
@@ -97,7 +101,7 @@ namespace Day_15
 		///     Does a time step in the combat
 		/// </summary>
 		/// <returns>Whether this was a "full step" or not</returns>
-		public bool Step()
+		public bool Step(bool stopOnElfDeath = false)
 		{
 			foreach (var player in CopyAndSortPlayers(Players))
 			{
@@ -109,6 +113,8 @@ namespace Day_15
 				var possibleTargets = Players.Where(p => p.Symbol != player.Symbol).ToList();
 				if (!possibleTargets.Any())
 				{
+					TerminationReason = $"Player from team {player.Symbol} found no target.";
+					Winners = player.Symbol.ToString();
 					return false;
 				}
 
@@ -146,8 +152,18 @@ namespace Day_15
 				if (adjacentTargets.Any())
 				{
 					var victim = player.AttackOneOf(adjacentTargets);
-					Players.RemoveAll(p => p.HitPoints <= 0);
-					RefreshCache(victim.Position);
+					if (victim.HitPoints <= 0)
+					{
+						Players.Remove(victim);
+						if (victim.IsElf && stopOnElfDeath)
+						{
+							TerminationReason = $"An elf died in round {Rounds+1}.";
+							Winners = player.Symbol.ToString();
+							return false;
+						}
+
+						RefreshCache(victim.Position);
+					}
 				}
 			}
 
