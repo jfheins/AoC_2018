@@ -169,21 +169,21 @@ namespace Day_16
 
 	public enum OpCode
 	{
-		Addr,
-		Addi,
-		Mulr,
-		Muli,
-		Banr,
-		Bani,
-		Borr,
-		Bori,
-		Setr,
-		Seti,
-		Gtir,
-		Gtri,
-		Gtrr,
-		Eqir,
-		Eqri,
-		Eqrr
+		Addi = 0,
+		Bani = 1,
+		Gtir = 2,
+		Borr = 3,
+		Eqrr = 4,
+		Bori = 5,
+		Gtrr = 6,
+		Setr = 7,
+		Muli = 8,
+		Seti = 9,
+		Banr = 10,
+		Gtri = 11,
+		Eqir = 12,
+		Eqri = 13,
+		Addr = 14,
+		Mulr = 15,
 	}
 }
