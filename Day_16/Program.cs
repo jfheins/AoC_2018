@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -32,7 +31,7 @@ namespace Day_16
 			foreach (var sample in beforeAfter)
 			{
 				var possibleOpcodes = new List<OpCode>();
-				for (int opcode = 0; opcode < 16; opcode++)
+				for (var opcode = 0; opcode < 16; opcode++)
 				{
 					var instruction = InstructionFromOpcodeAndContent(opcode, sample.opcode);
 					var result = Calculate(instruction, sample.before);
@@ -67,12 +66,12 @@ namespace Day_16
 
 		public static Instruction InstructionFromOpcodeAndContent(int opcode, int[] content)
 		{
-			return new Instruction((OpCode)opcode, content[1], content[2], content[3]);
+			return new Instruction((OpCode) opcode, content[1], content[2], content[3]);
 		}
 
 		public static Instruction InstructionFromInput(int[] content)
 		{
-			return new Instruction((OpCode)content[0], content[1], content[2], content[3]);
+			return new Instruction((OpCode) content[0], content[1], content[2], content[3]);
 		}
 
 		public static int[] Calculate(Instruction op, int[] registers)
@@ -172,6 +171,6 @@ namespace Day_16
 		Eqir = 12,
 		Eqri = 13,
 		Addr = 14,
-		Mulr = 15,
+		Mulr = 15
 	}
 }
