@@ -48,10 +48,17 @@ namespace Day_16
 				}
 			}
 
+			var program = File.ReadAllLines(@"../../../input_2.txt").Select(l => l.ParseInts(4));
 
+			var registers = new[] {0, 0, 0, 0};
+			foreach (var instr in program)
+			{
+				var instruction = InstructionFromInput(instr);
+				registers = Calculate(instruction, registers);
+			}
 
 			Console.WriteLine($"Part 1: {threeormore}");
-			Console.WriteLine("Part 2: ");
+			Console.WriteLine($"Part 2: {registers[0]}");
 
 			sw.Stop();
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
