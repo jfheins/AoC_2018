@@ -28,12 +28,6 @@ namespace Day_16
 				};
 			}).ToList();
 
-			var possibleCodings = new Dictionary<OpCode, HashSet<int>>();
-			for (int opcode = 0; opcode < 16; opcode++)
-			{
-				possibleCodings.Add((OpCode)opcode, new HashSet<int>(Enumerable.Range(0, 16)));
-			}
-
 			var threeormore = 0;
 			foreach (var sample in beforeAfter)
 			{
@@ -48,26 +42,13 @@ namespace Day_16
 					}
 				}
 
-				foreach (var impossible in possibleCodings.Keys.Except(possibleOpcodes))
-				{
-					possibleCodings[impossible].Remove(sample.opcode[0]);
-				}
-
-				if (possibleOpcodes.Count == 1)
-				{
-					Console.WriteLine($"Opcode {possibleOpcodes.First()} is {sample.opcode[0]}");
-				}
-
 				if (possibleOpcodes.Count >= 3)
 				{
 					threeormore++;
 				}
 			}
 
-			foreach (var possibleCoding in possibleCodings)
-			{
-				Console.WriteLine($"Opcode {possibleCoding.Key} can be one of {string.Join(", ", possibleCoding.Value)}");
-			}
+
 
 			Console.WriteLine($"Part 1: {threeormore}");
 			Console.WriteLine("Part 2: ");
