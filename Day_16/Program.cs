@@ -25,20 +25,13 @@ namespace Day_16
 					opcode = block[1],
 					after = block[2]
 				};
-			});
+			}).ToList();
 
 			var threeormore = 0;
-			//foreach (var sample in beforeAfter)
+			foreach (var sample in beforeAfter)
 			{
-				var sample = new
-				{
-					before = new[] { 3, 2, 1, 1},
-					opcode = new[] { 9, 2, 1, 2  },
-					after = new[] { 3, 2, 2, 1 }
-				};
-
 				var possibleOpcodes = new List<OpCode>();
-				for (int opcode = 0; opcode < 15; opcode++)
+				for (int opcode = 0; opcode < 16; opcode++)
 				{
 					var instruction = InstructionFromOpcodeAndContent(opcode, sample.opcode);
 					var result = Calculate(instruction, sample.before);
