@@ -23,7 +23,7 @@ namespace Day_17
 
 		private static void Main(string[] args)
 		{
-			var input = File.ReadAllLines(@"../../../bsp.txt");
+			var input = File.ReadAllLines(@"../../../input.txt");
 			var sw = new Stopwatch();
 			sw.Start();
 
@@ -36,12 +36,12 @@ namespace Day_17
 				ground[clayCoord] = '#';
 			}
 
-			ground[spring] = '+';
 
 			var maxX = ground.Keys.Max(c => c.X);
 			var minX = ground.Keys.Min(c => c.X);
 			var maxY = ground.Keys.Max(c => c.Y);
 			var minY = ground.Keys.Min(c => c.Y);
+			ground[spring] = '+';
 
 			FillSection(maxY, spring);
 
@@ -107,8 +107,11 @@ namespace Day_17
 						}
 						else
 						{
-							var newTip = FillToOverflow(tip, Direction.Left, '|');
-							FillSection(maxY, newTip);
+							//if (SymbolAt(tip) == '|')
+							{
+								var newTip = FillToOverflow(tip, Direction.Left, '|');
+								FillSection(maxY, newTip);
+							}
 						}
 
 						if (boundedRight)
@@ -117,8 +120,11 @@ namespace Day_17
 						}
 						else
 						{
-							var newTip = FillToOverflow(tip, Direction.Right, '|');
-							FillSection(maxY, newTip);
+							if (SymbolAt(tip) != '~')
+							{
+								var newTip = FillToOverflow(tip, Direction.Right, '|');
+								FillSection(maxY, newTip);
+							}
 						}
 
 						break;
