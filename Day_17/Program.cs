@@ -65,8 +65,12 @@ namespace Day_17
 				.Where(kvp => kvp.Key.Y >= minY && kvp.Key.Y <= maxY)
 				.Count(kvp => "|~".Contains(kvp.Value));
 
+			var part2 = ground
+				.Where(kvp => kvp.Key.Y >= minY && kvp.Key.Y <= maxY)
+				.Count(kvp => "~".Contains(kvp.Value));
+
 			Console.WriteLine($"Part 1: {part1}");
-			Console.WriteLine("Part 2: ");
+			Console.WriteLine($"Part 2: {part2}");
 
 			sw.Stop();
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
@@ -105,20 +109,18 @@ namespace Day_17
 						{
 							FillToClay(tip, Direction.Left, '|');
 						}
-						else
-						{
-							//if (SymbolAt(tip) == '|')
-							{
-								var newTip = FillToOverflow(tip, Direction.Left, '|');
-								FillSection(maxY, newTip);
-							}
-						}
-
 						if (boundedRight)
 						{
 							FillToClay(tip, Direction.Right, '|');
 						}
-						else
+
+
+						if (!boundedLeft)
+						{
+							var newTip = FillToOverflow(tip, Direction.Left, '|');
+							FillSection(maxY, newTip);
+						}
+						if(!boundedRight)
 						{
 							if (SymbolAt(tip) != '~')
 							{
