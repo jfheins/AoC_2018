@@ -32,9 +32,7 @@ namespace Day_17
 
 			ground = new Dictionary<Point, char>();
 			foreach (var clayCoord in clayCoords)
-			{
 				ground[clayCoord] = '#';
-			}
 
 
 			var maxX = ground.Keys.Max(c => c.X);
@@ -47,15 +45,13 @@ namespace Day_17
 
 			for (var y = minY; y <= maxY; y++)
 			{
-				char[] line = new char[maxX - minX + 1];
+				var line = new char[maxX - minX + 1];
 				for (var x = minX; x <= maxX; x++)
 				{
 					if (!ground.TryGetValue(new Point(x, y), out var p))
-					{
 						p = '.';
-					}
 
-					line[x-minX] = p;
+					line[x - minX] = p;
 				}
 
 				Console.WriteLine(y + ": " + string.Concat(line));
@@ -90,9 +86,7 @@ namespace Day_17
 				else
 				{
 					if (SymbolAt(tip, Direction.Down) == '|')
-					{
 						break;
-					}
 					Debug.Assert("#~".Contains(SymbolAt(tip, Direction.Down)));
 					// Expand left & right
 					var boundedLeft = Probe(tip, Direction.Left);
@@ -106,13 +100,9 @@ namespace Day_17
 					else
 					{
 						if (boundedLeft)
-						{
 							FillToClay(tip, Direction.Left, '|');
-						}
 						if (boundedRight)
-						{
 							FillToClay(tip, Direction.Right, '|');
-						}
 
 
 						if (!boundedLeft)
@@ -120,7 +110,8 @@ namespace Day_17
 							var newTip = FillToOverflow(tip, Direction.Left, '|');
 							FillSection(maxY, newTip);
 						}
-						if(!boundedRight)
+
+						if (!boundedRight)
 						{
 							if (SymbolAt(tip) != '~')
 							{
@@ -151,6 +142,7 @@ namespace Day_17
 				ground[tip] = c;
 				tip += _mapDirectionToSize[dir];
 			}
+
 			ground[tip] = c;
 			return tip;
 		}
@@ -160,14 +152,10 @@ namespace Day_17
 			while (true)
 			{
 				if (SymbolAt(tip, dir) == '#')
-				{
 					return true;
-				}
 
 				if (".|".Contains(SymbolAt(tip, Direction.Down)))
-				{
 					return false;
-				}
 
 				tip += _mapDirectionToSize[dir];
 			}
@@ -184,24 +172,18 @@ namespace Day_17
 			var xStr = Regex.Match(arg, @"x=([-0-9]+)(?:(?:\.\.)([-0-9]+))?").Groups;
 			var minX = int.Parse(xStr[1].Value);
 			if (!int.TryParse(xStr[2].Value, out var maxX))
-			{
 				maxX = minX;
-			}
 
 			var yStr = Regex.Match(arg, @"y=([-0-9]+)(?:(?:\.\.)([-0-9]+))?").Groups;
 			var minY = int.Parse(yStr[1].Value);
 
 			if (!int.TryParse(yStr[2].Value, out var maxY))
-			{
 				maxY = minY;
-			}
 
 			for (var x = minX; x <= maxX; x++)
 			{
 				for (var y = minY; y <= maxY; y++)
-				{
 					yield return new Point(x, y);
-				}
 			}
 		}
 	}
