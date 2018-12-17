@@ -13,11 +13,14 @@ namespace Day_15
 			var sw = new Stopwatch();
 			sw.Start();
 
-			var result = Enumerable.Range(4, 20).AsParallel().Select(elfPower =>
+			var result = Enumerable.Range(4, 16).AsParallel().Select(elfPower =>
 			{
 				var sim = new BattleSimulator(input, elfPower);
 
-				while (sim.Step(stopOnElfDeath: true)) { }
+				while (sim.Step(stopOnElfDeath: true))
+				{
+					//Console.WriteLine(sim.ToString());
+				}
 
 				return new
 				{
