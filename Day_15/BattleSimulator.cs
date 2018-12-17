@@ -26,7 +26,7 @@ namespace Day_15
 			{Direction.Down, new Size(0, 1)}
 		};
 
-		private readonly BreadthFirstSearch<Point, Direction> _bfs;
+		private readonly DijkstraSearch<Point, Direction> _search;
 
 		private readonly string[] _cave;
 		private readonly Dictionary<Point, bool> _walkable;
@@ -47,11 +47,11 @@ namespace Day_15
 					return new KeyValuePair<Point, bool>(p, IsWalkable(p));
 				}));
 
-			_bfs = new BreadthFirstSearch<Point, Direction>(
+			_search = new DijkstraSearch<Point, Direction>(
 				EqualityComparer<Point>.Default,
 				point => GetAdjacentPoints(point)
-					.Where(p => _walkable[p]));
-			_bfs.PerformParallelSearch = false;
+					.Where(p => _walkable[p])
+					.Select(p => (p, 1.0f)));
 		}
 
 		public Rectangle CaveBounds { get; }
@@ -126,11 +126,12 @@ namespace Day_15
 						.SelectMany(t => GetAdjacentPoints(t.Position))
 						.Where(IsWalkable));
 
-					var nearReachablePositions = GetAdjacentPoints(player.Position)
-						.Where(IsWalkable)
-						.AsParallel()
-						.SelectMany(firstStep => _bfs.FindAll(firstStep,
-							p => positionsInRange.Contains(p), null, 1))
+					var firstSteps = (player.Position, 0.0f).ToEnumerable().Concat(GetAdjacentPoints(player.Position)
+						.Zip(new [] { 0.6f, 0.7f, 0.8f, 0.9f}, (node, cost) => (node, cost))
+						.Where(t => IsWalkable(t.node)));
+
+					var nearReachablePositions =  _search.FindAll(firstSteps,
+							p => positionsInRange.Contains(p), null, 3)
 						.ToList();
 
 					if (nearReachablePositions.Any())
@@ -141,7 +142,7 @@ namespace Day_15
 							.ThenBy(path => path.Target.Y)
 							.ThenBy(path => path.Target.X)
 							.First();
-						var targetSquare = firstInReadingOrder.Steps[0];
+						var targetSquare = firstInReadingOrder.Steps[1];
 						var oldPosition = player.Position;
 						player.StepTo(targetSquare);
 						adjacentTargets = possibleTargets.Where(target => AreAdjacent(player, target)).ToList();
