@@ -84,6 +84,10 @@ namespace Day_17
 				}
 				else
 				{
+					if (SymbolAt(tip, Direction.Down) == '|')
+					{
+						break;
+					}
 					Debug.Assert("#~".Contains(SymbolAt(tip, Direction.Down)));
 					// Expand left & right
 					var boundedLeft = Probe(tip, Direction.Left);
@@ -138,7 +142,7 @@ namespace Day_17
 				ground[tip] = c;
 				tip += _mapDirectionToSize[dir];
 			}
-
+			ground[tip] = c;
 			return tip;
 		}
 
