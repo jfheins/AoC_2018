@@ -45,8 +45,9 @@ namespace Day_17
 
 			FillSection(maxY, spring);
 
-			for (var y = minY; y < maxY; y++)
+			for (var y = minY; y <= maxY; y++)
 			{
+				char[] line = new char[maxX - minX + 1];
 				for (var x = minX; x <= maxX; x++)
 				{
 					if (!ground.TryGetValue(new Point(x, y), out var p))
@@ -54,10 +55,10 @@ namespace Day_17
 						p = '.';
 					}
 
-					Console.Write(p);
+					line[x-minX] = p;
 				}
 
-				Console.WriteLine();
+				Console.WriteLine(y + ": " + string.Concat(line));
 			}
 
 			var part1 = ground
@@ -150,14 +151,14 @@ namespace Day_17
 		{
 			while (true)
 			{
-				if (".|".Contains(SymbolAt(tip, Direction.Down)))
-				{
-					return false;
-				}
-
 				if (SymbolAt(tip, dir) == '#')
 				{
 					return true;
+				}
+
+				if (".|".Contains(SymbolAt(tip, Direction.Down)))
+				{
+					return false;
 				}
 
 				tip += _mapDirectionToSize[dir];
