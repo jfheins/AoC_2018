@@ -34,7 +34,6 @@ namespace Day_15
 				}
 			}
 
-
 			sw.Stop();
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
 			Console.ReadLine();

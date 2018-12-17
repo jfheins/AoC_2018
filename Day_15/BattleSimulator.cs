@@ -14,7 +14,7 @@ namespace Day_15
 		Up,
 		Right,
 		Down
-	}
+	} 
 
 	public class BattleSimulator
 	{
