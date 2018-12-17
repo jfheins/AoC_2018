@@ -51,6 +51,7 @@ namespace Day_15
 				EqualityComparer<Point>.Default,
 				point => GetAdjacentPoints(point)
 					.Where(p => _walkable[p]));
+			_bfs.PerformParallelSearch = false;
 		}
 
 		public Rectangle CaveBounds { get; }
@@ -127,6 +128,7 @@ namespace Day_15
 
 					var nearReachablePositions = GetAdjacentPoints(player.Position)
 						.Where(IsWalkable)
+						.AsParallel()
 						.SelectMany(firstStep => _bfs.FindAll(firstStep,
 							p => positionsInRange.Contains(p), null, 1))
 						.ToList();
