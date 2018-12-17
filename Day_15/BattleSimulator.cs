@@ -131,7 +131,7 @@ namespace Day_15
 						.Where(t => IsWalkable(t.node)));
 
 					var nearReachablePositions =  _search.FindAll(firstSteps,
-							p => positionsInRange.Contains(p), null, 3)
+							p => positionsInRange.Contains(p), null, 2)
 						.ToList();
 
 					if (nearReachablePositions.Any())

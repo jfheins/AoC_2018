@@ -13,26 +13,27 @@ namespace Day_15
 			var sw = new Stopwatch();
 			sw.Start();
 
-			for (var elfPower = 4; elfPower < 20; elfPower++)
+			var result = Enumerable.Range(4, 20).AsParallel().Select(elfPower =>
 			{
 				var sim = new BattleSimulator(input, elfPower);
 
-				while (sim.Step(stopOnElfDeath: true))
-				{
-				}
+				while (sim.Step(stopOnElfDeath: true)) { }
 
-				Console.WriteLine($"Elf power: {elfPower}");
-				Console.WriteLine($"Ended because: {sim.TerminationReason}");
-				Console.WriteLine($"Winning side: {sim.Winners}");
-				Console.WriteLine($"Outcome: {sim.Rounds * sim.HitPointSum}");
-				Console.WriteLine($"Rounds: {sim.Rounds}");
-				Console.WriteLine();
-
-				if (sim.Winners == "E")
+				return new
 				{
-					break;
-				}
-			}
+					elfPower,
+					sim.TerminationReason,
+					sim.Winners,
+					outcome = sim.Rounds * sim.HitPointSum,
+					sim.Rounds
+				};
+			}).First(res => res.Winners == "E");
+
+			Console.WriteLine($"Elf power: {result.elfPower}");
+			Console.WriteLine($"Ended because: {result.TerminationReason}");
+			Console.WriteLine($"Winning side: {result.Winners}");
+			Console.WriteLine($"Outcome: {result.outcome}");
+			Console.WriteLine($"Rounds: {result.Rounds}");
 
 			sw.Stop();
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
