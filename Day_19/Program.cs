@@ -23,26 +23,34 @@ namespace Day_19
 			var registers = new[] {0, 0, 0, 0, 0, 0};
 			while (ip >= 0 && ip < instructions.Length)
 			{
-				registers[ipRegister] = ip;
-				Calculate(instructions[ip], ref registers);
-				ip = registers[ipRegister];
-				ip++;
+				if (ip >= 3 && ip <= 11)
+				{
+					ip = InnerLoop_Fast(ref registers);
+				}
+				else
+				{
+					registers[ipRegister] = ip;
+					Calculate(instructions[ip], ref registers);
+					ip = registers[ipRegister];
+					ip++;
+				}
 			}
 
 			var part1 = registers[0];
 			Console.WriteLine($"Part 1: {part1}");
 
 
-			//instructions[2] = new Instruction(OpCode.Seti, 10551250, 0, 3);
 			ip = 0;
-			ipRegister = int.Parse(input[0][4].ToString());
 			registers = new[] {1, 0, 0, 0, 0, 0};
 			while (ip >= 0 && ip < instructions.Length)
 			{
 				if (ip >= 3 && ip <= 11)
 				{
-					ip = InnerLoop(ref registers);
-					//Console.WriteLine(registers[1]);
+					ip = InnerLoop_Fast(ref registers);
+					if (registers[1] % 1000000 == 0)
+					{
+						Console.WriteLine(registers[0] + "; " + registers[1]);
+					}
 				}
 				else
 				{
@@ -60,6 +68,19 @@ namespace Day_19
 			sw.Stop();
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
 			Console.ReadLine();
+		}
+
+		private static int InnerLoop_Fast(ref int[] registers)
+		{
+			if (registers[5] % registers[1] == 0)
+			{
+				registers[0]++;
+			}
+
+			registers[3] = registers[5] + 1;
+			registers[2] = 1;
+			registers[4] = 11;
+			return 12;
 		}
 
 		private static int InnerLoop(ref int[] registers)
