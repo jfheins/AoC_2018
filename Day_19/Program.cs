@@ -74,7 +74,7 @@ namespace Day_19
 		{
 			if (registers[5] % registers[1] == 0)
 			{
-				registers[0]++;
+				registers[0] += registers[1];
 			}
 
 			registers[3] = registers[5] + 1;
@@ -91,7 +91,7 @@ namespace Day_19
 			{
 				if (registers[1] * registers[3] == register5)
 				{
-					registers[0]++;
+					registers[0] += registers[1];
 				}
 
 				registers[3]++;
