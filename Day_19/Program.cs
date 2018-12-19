@@ -9,7 +9,7 @@ namespace Day_19
 {
 	public class Program
 	{
-		static void Main(string[] args)
+		private static void Main(string[] args)
 		{
 			var input = File.ReadAllLines(@"../../../input.txt");
 			var sw = new Stopwatch();
@@ -20,7 +20,7 @@ namespace Day_19
 			var ipRegister = int.Parse(input[0][4].ToString());
 			var ip = 0;
 
-			var registers = new[] { 0, 0, 0, 0, 0, 0 };
+			var registers = new[] {0, 0, 0, 0, 0, 0};
 			while (ip >= 0 && ip < instructions.Length)
 			{
 				registers[ipRegister] = ip;
@@ -32,15 +32,25 @@ namespace Day_19
 			var part1 = registers[0];
 			Console.WriteLine($"Part 1: {part1}");
 
+
+			//instructions[2] = new Instruction(OpCode.Seti, 10551250, 0, 3);
 			ip = 0;
 			ipRegister = int.Parse(input[0][4].ToString());
-			registers = new[] { 1, 0, 0, 0, 0, 0 };
+			registers = new[] {1, 0, 0, 0, 0, 0};
 			while (ip >= 0 && ip < instructions.Length)
 			{
-				registers[ipRegister] = ip;
-				Calculate(instructions[ip], ref registers);
-				ip = registers[ipRegister];
-				ip++;
+				if (ip >= 3 && ip <= 11)
+				{
+					ip = InnerLoop(ref registers);
+					//Console.WriteLine(registers[1]);
+				}
+				else
+				{
+					registers[ipRegister] = ip;
+					Calculate(instructions[ip], ref registers);
+					ip = registers[ipRegister];
+					ip++;
+				}
 			}
 
 			var part2 = registers[0];
@@ -50,6 +60,27 @@ namespace Day_19
 			sw.Stop();
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
 			Console.ReadLine();
+		}
+
+		private static int InnerLoop(ref int[] registers)
+		{
+			const int register5 = 10551264;
+
+			while (true)
+			{
+				if (registers[1] * registers[3] == register5)
+				{
+					registers[0]++;
+				}
+
+				registers[3]++;
+				if (registers[3] > register5)
+				{
+					registers[2] = 1;
+					registers[4] = 11;
+					return 12;
+				}
+			}
 		}
 
 		private static Instruction ParseLine(string line)

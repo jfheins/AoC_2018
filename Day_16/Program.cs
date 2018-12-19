@@ -152,6 +152,11 @@ namespace Day_16
 			B = b;
 			C = c;
 		}
+
+		public override string ToString()
+		{
+			return $"{OpCode} {A} {B} => {C}";
+		}
 	}
 
 	public enum OpCode
