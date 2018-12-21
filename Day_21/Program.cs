@@ -22,20 +22,19 @@ namespace Day_21
 			var ipRegister = int.Parse(input[0][4].ToString());
 			var ip = 0;
 
-			var registers = new[] { 7224964, 0, 0, 0, 0, 0};
+			var registers = new[] { 0, 0, 0, 0, 0, 0};
 
 
 			while (ip >= 0 && ip < instructions.Length)
 			{
 				if (ip == 13 && registers[4] < 256)
 				{
-					Console.WriteLine(registers[5]);
+					Console.WriteLine($"Value of {registers[5]} terminates after {instructionCounter}");
 				}
 
 				if (ip >= 18 && ip <= 25)
 				{
 					ip = InnerLoop(ref registers);
-					//Console.WriteLine(registers[5]);
 				}
 				else
 				{
@@ -57,10 +56,12 @@ namespace Day_21
 
 		private static int InnerLoop(ref int[] registers)
 		{
-			registers[3] = registers[4] / 256;
+			var loopCount = registers[4] / 256;
+			registers[3] = loopCount;
 			registers[2] = registers[3] + 1;
 
 			registers[1] = 25;
+			instructionCounter += loopCount * 7 + 5;
 			return 25;
 		}
 
