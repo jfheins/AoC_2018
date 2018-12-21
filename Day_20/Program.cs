@@ -13,7 +13,7 @@ namespace Day_20
 		private static void Main(string[] args)
 		{
 			var input = File.ReadAllText(@"../../../input.txt");
-			input = @"^E|SSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$";
+			input = @"^ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$";
 			var sw = new Stopwatch();
 			sw.Start();
 
@@ -31,25 +31,30 @@ namespace Day_20
 
 		private static RegexComponent ParseThing(ReadOnlySpan<char> window)
 		{
+			var level = 0;
+			var isLiteral = true;
 			foreach (var c in window)
 			{
-				if (c == '|')
+				if (c == '|' && level == 0)
 				{
 					return ParseOption(window);
 				}
-
 				if (c == '(')
 				{
-					return ParseSequence(window);
+					isLiteral = false;
+					level++;
+				}
+				if (c == ')')
+				{
+					level--;
 				}
 			}
 
-			return new Literal(window);
+			return isLiteral ? new Literal(window) : ParseSequence(window);
 		}
 
 		private static RegexComponent ParseSequence(ReadOnlySpan<char> str)
 		{
-			Console.WriteLine(str.ToString());
 			var result = new Sequence();
 			var level = 0;
 			var segmentStart = 0;
@@ -93,31 +98,35 @@ namespace Day_20
 
 		private static RegexComponent ParseOption(ReadOnlySpan<char> str)
 		{
-			Console.WriteLine(str.ToString());
 			var result = new Alternatives();
 			var level = 0;
 			var segmentStart = 0;
+			var isLiteral = true;
 
 			var i = 0;
 			while (i < str.Length)
 			{
 				if (str[i] == '|' && level == 0)
 				{
-					result.Add(new Literal(str.Slice(segmentStart, i - segmentStart)));
+					if (isLiteral)
+					{
+						result.Add(new Literal(str.Slice(segmentStart, i - segmentStart)));
+					}
+					else
+					{
+						result.Add(ParseThing(str.Slice(segmentStart, i - segmentStart)));
+					}
 					segmentStart = i + 1;
+					isLiteral = true;
 				}
 				else if (str[i] == '(')
 				{
 					level++;
+					isLiteral = false;
 				}
 				else if (str[i] == ')')
 				{
 					level--;
-					if (level == 0)
-					{
-						result.Add(ParseSequence(str.Slice(segmentStart, i - segmentStart + 1)));
-						segmentStart = i + 1;
-					}
 				}
 
 				i++;
@@ -125,7 +134,14 @@ namespace Day_20
 
 			if (segmentStart <= str.Length)
 			{
-				result.Add(new Literal(str.Slice(segmentStart, str.Length - segmentStart)));
+				if (isLiteral)
+				{
+					result.Add(new Literal(str.Slice(segmentStart, str.Length - segmentStart)));
+				}
+				else
+				{
+					result.Add(ParseThing(str.Slice(segmentStart, str.Length - segmentStart)));
+				}
 			}
 
 			return result;
