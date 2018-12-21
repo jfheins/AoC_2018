@@ -1,15 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Core;
 using Day_16;
+using MoreLinq;
 
 namespace Day_21
 {
 	internal class Program
 	{
-		private static int instructionCounter;
+		private static long instructionCounter;
 
 		private static void Main(string[] args)
 		{
@@ -23,13 +25,18 @@ namespace Day_21
 			var ip = 0;
 
 			var registers = new[] { 0, 0, 0, 0, 0, 0};
-
+			var haltCounters = new Dictionary<int, long>();
 
 			while (ip >= 0 && ip < instructions.Length)
 			{
 				if (ip == 13 && registers[4] < 256)
 				{
-					Console.WriteLine($"Value of {registers[5]} terminates after {instructionCounter}");
+					//Console.WriteLine($"Value of {registers[5]} terminates after {instructionCounter}");
+
+					if (!haltCounters.TryAdd(registers[5], instructionCounter))
+					{
+						break;
+					}
 				}
 
 				if (ip >= 18 && ip <= 25)
@@ -45,8 +52,10 @@ namespace Day_21
 				ip++;
 			}
 
-			Console.WriteLine($"Part 1: {instructionCounter}");
-			Console.WriteLine("Part 2: ");
+			var part1 = haltCounters.MinBy(kvp => kvp.Value).First();
+			var part2 = haltCounters.MaxBy(kvp => kvp.Value).First();
+			Console.WriteLine($"Part 1: {part1.Key} halts after {part1.Value}");
+			Console.WriteLine($"Part 2: {part2.Key} halts after {part2.Value}");
 
 			sw.Stop();
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
