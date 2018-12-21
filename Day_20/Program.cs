@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Day_20
@@ -18,7 +17,7 @@ namespace Day_20
 			var sw = new Stopwatch();
 			sw.Start();
 
-			var tree = ParseThing(input);
+			var tree = ParseThing(input.AsSpan(1, input.Length - 2));
 
 			Console.WriteLine(tree);
 
@@ -38,11 +37,13 @@ namespace Day_20
 				{
 					return ParseOption(window);
 				}
+
 				if (c == '(')
 				{
 					return ParseSequence(window);
 				}
 			}
+
 			return new Literal(window);
 		}
 
@@ -51,20 +52,20 @@ namespace Day_20
 			Console.WriteLine(str.ToString());
 			var result = new Sequence();
 			var level = 0;
-			var segmentStart = 1;
+			var segmentStart = 0;
 
-			// Exclude first and last char
-			var i = 1;
-			while (i < str.Length - 1)
+			var i = 0;
+			while (i < str.Length)
 			{
 				if (str[i] == '(')
 				{
 					if (i > segmentStart && level == 0)
 					{
 						// Prefix
-						result.Add(new Literal(str.Slice(segmentStart + 1, i - segmentStart + 1)));
-						segmentStart = i;
+						result.Add(new Literal(str.Slice(segmentStart, i - segmentStart)));
+						segmentStart = i + 1;
 					}
+
 					level++;
 				}
 				else if (str[i] == ')')
@@ -73,15 +74,15 @@ namespace Day_20
 					if (level == 0)
 					{
 						// Middle
-						result.Add(ParseThing(str.Slice(segmentStart, i - segmentStart + 2)));
-						segmentStart = i+1;
+						result.Add(ParseThing(str.Slice(segmentStart, i - segmentStart)));
+						segmentStart = i + 1;
 					}
 				}
 
 				i++;
 			}
 
-			if (segmentStart < str.Length - 2)
+			if (segmentStart < str.Length)
 			{
 				// Suffix
 				result.Add(new Literal(str.Slice(segmentStart, str.Length - segmentStart)));
@@ -96,37 +97,33 @@ namespace Day_20
 			var result = new Alternatives();
 			var level = 0;
 			var segmentStart = 0;
-			var isLiteral = true;
 
-			// Exclude first and last char
-			var i = 1;
-			while (i < str.Length - 1)
+			var i = 0;
+			while (i < str.Length)
 			{
 				if (str[i] == '|' && level == 0)
 				{
-					result.Add(new Literal(str.Slice(segmentStart + 1, i - segmentStart - 1)));
-					segmentStart = i;
-					isLiteral = true;
+					result.Add(new Literal(str.Slice(segmentStart, i - segmentStart)));
+					segmentStart = i + 1;
 				}
 				else if (str[i] == '(')
 				{
 					level++;
-					isLiteral = false;
 				}
 				else if (str[i] == ')')
 				{
 					level--;
 					if (level == 0)
 					{
-						result.Add(ParseSequence(str.Slice(segmentStart, i - segmentStart + 2)));
-						segmentStart = i;
+						result.Add(ParseSequence(str.Slice(segmentStart, i - segmentStart + 1)));
+						segmentStart = i + 1;
 					}
 				}
 
 				i++;
 			}
 
-			if (segmentStart < str.Length - 2)
+			if (segmentStart <= str.Length)
 			{
 				result.Add(new Literal(str.Slice(segmentStart, str.Length - segmentStart)));
 			}
@@ -151,6 +148,11 @@ namespace Day_20
 		}
 
 		public string Value { get; set; }
+
+		public override string ToString()
+		{
+			return Value;
+		}
 	}
 
 	public class Alternatives : RegexComponent
