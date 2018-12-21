@@ -14,23 +14,13 @@ namespace Day_20
 		private static void Main(string[] args)
 		{
 			var input = File.ReadAllText(@"../../../input.txt");
-			//input = @"^E|SSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$";
+			input = @"^E|SSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$";
 			var sw = new Stopwatch();
 			sw.Start();
 
-			var possiblePaths = new HashSet<string>(RegexToPath(input));
+			var tree = ParseThing(input);
 
-			while (didWork)
-			{
-				didWork = false;
-				possiblePaths = new HashSet<string>(possiblePaths.SelectMany(RegexToPath));
-			}
-			// Top level option?
-			Debug.Assert(possiblePaths.All(s => !s.Contains('|')), "No path shall contain |");
-
-
-
-			Console.WriteLine(possiblePaths.Count);
+			Console.WriteLine(tree);
 
 			Console.WriteLine("Part 1: ");
 			Console.WriteLine("Part 2: ");
@@ -40,31 +30,108 @@ namespace Day_20
 			Console.ReadLine();
 		}
 
-		private static bool didWork = true;
-
-		private static IEnumerable<string> RegexToPath(string str)
+		private static RegexComponent ParseThing(ReadOnlySpan<char> window)
 		{
-			var match = groupMatcher.Match(str);
-
-			if (match.Success)
+			foreach (var c in window)
 			{
-				didWork = true;
-				Debug.Assert(match.Groups.Count == 4);
-
-				var options = ParseOptions(match.Groups[2].Value);
-
-				foreach (var option in options)
-					yield return match.Groups[1].Value + option + match.Groups[3].Value;
+				if (c == '|')
+				{
+					return ParseOption(window);
+				}
+				if (c == '(')
+				{
+					return ParseSequence(window);
+				}
 			}
-			else
-			{
-				yield return str;
-			}
+			return new Literal(window);
 		}
 
-		private static IEnumerable<string> ParseOptions(string str)
+		private static RegexComponent ParseSequence(ReadOnlySpan<char> str)
 		{
-			return str.Split('|');
+			Console.WriteLine(str.ToString());
+			var result = new Sequence();
+			var level = 0;
+			var segmentStart = 1;
+
+			// Exclude first and last char
+			var i = 1;
+			while (i < str.Length - 1)
+			{
+				if (str[i] == '(')
+				{
+					if (i > segmentStart && level == 0)
+					{
+						// Prefix
+						result.Add(new Literal(str.Slice(segmentStart + 1, i - segmentStart + 1)));
+						segmentStart = i;
+					}
+					level++;
+				}
+				else if (str[i] == ')')
+				{
+					level--;
+					if (level == 0)
+					{
+						// Middle
+						result.Add(ParseThing(str.Slice(segmentStart, i - segmentStart + 2)));
+						segmentStart = i+1;
+					}
+				}
+
+				i++;
+			}
+
+			if (segmentStart < str.Length - 2)
+			{
+				// Suffix
+				result.Add(new Literal(str.Slice(segmentStart, str.Length - segmentStart)));
+			}
+
+			return result;
+		}
+
+		private static RegexComponent ParseOption(ReadOnlySpan<char> str)
+		{
+			Console.WriteLine(str.ToString());
+			var result = new Alternatives();
+			var level = 0;
+			var segmentStart = 0;
+			var isLiteral = true;
+
+			// Exclude first and last char
+			var i = 1;
+			while (i < str.Length - 1)
+			{
+				if (str[i] == '|' && level == 0)
+				{
+					result.Add(new Literal(str.Slice(segmentStart + 1, i - segmentStart - 1)));
+					segmentStart = i;
+					isLiteral = true;
+				}
+				else if (str[i] == '(')
+				{
+					level++;
+					isLiteral = false;
+				}
+				else if (str[i] == ')')
+				{
+					level--;
+					if (level == 0)
+					{
+						result.Add(ParseSequence(str.Slice(segmentStart, i - segmentStart + 2)));
+						segmentStart = i;
+					}
+				}
+
+				i++;
+			}
+
+			if (segmentStart < str.Length - 2)
+			{
+				result.Add(new Literal(str.Slice(segmentStart, str.Length - segmentStart)));
+			}
+
+			return result;
 		}
 	}
 
@@ -89,6 +156,11 @@ namespace Day_20
 	public class Alternatives : RegexComponent
 	{
 		public List<RegexComponent> Parts { get; } = new List<RegexComponent>();
+
+		public void Add(RegexComponent item)
+		{
+			Parts.Add(item);
+		}
 	}
 
 	public class Sequence : RegexComponent
