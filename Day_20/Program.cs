@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
+using Core;
 
 namespace Day_20
 {
@@ -10,16 +13,56 @@ namespace Day_20
 	{
 		private static readonly Regex groupMatcher = new Regex(@"(.+)\(([NEWS|]+)\)(.+)");
 
+		private static readonly Dictionary<Point, bool[]> RoomsWithDoors = new Dictionary<Point, bool[]>();
+
+		private static readonly Walker elf = new Walker();
+
+		public static readonly Dictionary<char, Size> _mapDirectionToSize = new Dictionary<char, Size>
+		{
+			{'W', new Size(-1, 0)},
+			{'N', new Size(0, -1)},
+			{'E', new Size(1, 0)},
+			{'S', new Size(0, 1)}
+		};
+
+		public static readonly Dictionary<int, Size> _mapIndexToSize = new Dictionary<int, Size>
+		{
+			{0, new Size(-1, 0)},
+			{1, new Size(0, -1)},
+			{2, new Size(1, 0)},
+			{3, new Size(0, 1)}
+		};
+
 		private static void Main(string[] args)
 		{
 			var input = File.ReadAllText(@"../../../input.txt");
-			input = @"^ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$";
+			//input = @"^ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$";
+			input = @"^WSSEESWWWNW(S|NENNEEEENN(ESSSSW(NWSW|SSEN)|WSWWN(E|WWS(E|SS))))$";
 			var sw = new Stopwatch();
 			sw.Start();
 
 			var tree = ParseThing(input.AsSpan(1, input.Length - 2));
 
-			Console.WriteLine(tree);
+			var paths = WalkAllRooms(tree as Sequence);
+			RoomsWithDoors.Add(new Point(0, 0), new bool[4]);
+			foreach (var path in paths)
+			{
+				if (path.Contains('('))
+				{
+					Console.WriteLine();
+				}
+				else
+				{
+					WalkPath(path);
+				}
+			}
+
+			var bfs = new BreadthFirstSearch<Point, int>(EqualityComparer<Point>.Default, Expander);
+
+			var rooms = bfs.FindAll(new Point(0, 0), p => RoomsWithDoors[p].Count(x => x) == 3);
+
+			foreach (var room in rooms)
+				Console.WriteLine($"Room {room.Target} has distance {room.Length}");
 
 			Console.WriteLine("Part 1: ");
 			Console.WriteLine("Part 2: ");
@@ -28,6 +71,53 @@ namespace Day_20
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
 			Console.ReadLine();
 		}
+
+		private static IEnumerable<Point> Expander(Point arg)
+		{
+			return RoomsWithDoors[arg].IndexWhere(x => x).Select(idx => arg + _mapIndexToSize[idx]);
+		}
+
+		private static void WalkPath(string path)
+		{
+			elf.Position = new Point(0, 0);
+			foreach (var c in path)
+				elf.Walk(c);
+		}
+
+
+		private static IEnumerable<string> WalkAllRooms(Sequence input)
+		{
+			return WalkAllRooms(Enumerable.Empty<string>(), input.Parts);
+		}
+
+		private static IEnumerable<string> WalkAllRooms(IEnumerable<string> prefix, IEnumerable<RegexComponent> suffix)
+		{
+			var first = suffix.FirstOrDefault();
+			if (first == null)
+			{
+				return string.Concat(prefix).ToEnumerable();
+			}
+
+			if (first is Literal literal)
+			{
+				prefix = prefix.Concat(literal.Value.ToEnumerable());
+				return WalkAllRooms(prefix, suffix.Skip(1));
+			}
+
+			if (first is Alternatives a)
+			{
+				return a.Parts.SelectMany(option => WalkAllRooms(prefix, option.ToEnumerable().Concat(suffix.Skip(1))));
+			}
+
+			if (first is Sequence s)
+			{
+				suffix = s.Parts.Concat(suffix.Skip(1));
+				return WalkAllRooms(prefix, suffix);
+			}
+
+			throw new NotImplementedException();
+		}
+
 
 		private static RegexComponent ParseThing(ReadOnlySpan<char> window)
 		{
@@ -39,11 +129,13 @@ namespace Day_20
 				{
 					return ParseOption(window);
 				}
+
 				if (c == '(')
 				{
 					isLiteral = false;
 					level++;
 				}
+
 				if (c == ')')
 				{
 					level--;
@@ -116,6 +208,7 @@ namespace Day_20
 					{
 						result.Add(ParseThing(str.Slice(segmentStart, i - segmentStart)));
 					}
+
 					segmentStart = i + 1;
 					isLiteral = true;
 				}
@@ -145,6 +238,33 @@ namespace Day_20
 			}
 
 			return result;
+		}
+
+		private class Walker
+		{
+			public Point Position { get; set; } = new Point(0, 0);
+
+			private static int mapDirToOppositeIndex(char c)
+			{
+				return "ESWN".IndexOf(c);
+			}
+
+			public static int mapDirToIndex(char c)
+			{
+				return "WNES".IndexOf(c);
+			}
+
+			public void Walk(char direction)
+			{
+				RoomsWithDoors[Position][mapDirToIndex(direction)] = true;
+				Position += _mapDirectionToSize[direction];
+				if (!RoomsWithDoors.ContainsKey(Position))
+				{
+					RoomsWithDoors[Position] = new bool[4];
+				}
+
+				RoomsWithDoors[Position][mapDirToOppositeIndex(direction)] = true;
+			}
 		}
 	}
 
