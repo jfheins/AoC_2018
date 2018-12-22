@@ -9,56 +9,24 @@ namespace Day_22
 {
 	public class Program
 	{
-		private static int[,] erosionLevel;
+        private static Point origin;
+        private static Point target;
+        private static int depth;
 
 		private static void Main(string[] args)
 		{
-			int depth = 5913;
+			depth = 5913;
+			origin = new Point(0, 0);
 			var target = new Point(8, 701);
+
 			var sw = new Stopwatch();
 			sw.Start();
-
-			var padding = 800;
-
-			erosionLevel = new int[target.X + padding, target.Y + padding];
-			var origin = new Point(0, 0);
-
-			const int xFactor = 16807;
-			const int yFactor = 48271;
-
-			for (var x = 0; x < target.X + padding; x++)
-			{
-				for (var y = 0; y < target.Y + padding; y++)
-				{
-					var p = new Point(x, y);
-					int geoIndex = 0;
-
-					if (p == origin || p == target)
-					{
-						geoIndex = 0;
-					}
-					else if (y == 0)
-					{
-						geoIndex = (int) x * xFactor;
-					}
-					else if (x == 0)
-					{
-						geoIndex = (int) y * yFactor;
-					}
-					else
-					{
-						geoIndex = erosionLevel[x - 1, y] * erosionLevel[x, y - 1];
-					}
-
-					erosionLevel[x, y] = (geoIndex + depth) % 20183;
-				}
-			}
-
+            
 			var risk = 0;
 			for (var x = 0; x <= target.X; x++)
 			{
 				for (var y = 0; y <= target.Y; y++)
-					risk += (int) (erosionLevel[x, y] % 3);
+					risk += (int) (GetErosionLevelAt(new Point(x, y)) % 3);
 			}
 
 			Console.WriteLine($"Part 1: {risk}");
@@ -76,6 +44,35 @@ namespace Day_22
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
 			Console.ReadLine();
 		}
+
+        private static Dictionary<Point, int> erosionLevelCache = new Dictionary<Point, int>();
+        private static readonly Size left = new Size(-1, 0);
+        private static readonly Size up = new Size(-1, 0);
+
+        private static int GetErosionLevelAt(Point p)
+        {
+            return erosionLevelCache.GetOrAdd(p, () =>
+            {
+                int geoIndex = 0;
+                if (p == origin || p == target)
+                {
+                    geoIndex = 0;
+                }
+                else if (p.Y == 0)
+                {
+                    geoIndex = p.X * 16807;
+                }
+                else if (p.X == 0)
+                {
+                    geoIndex = p.Y * 48271;
+                }
+                else
+                {
+                    geoIndex = GetErosionLevelAt(p + left) * GetErosionLevelAt(p + up);
+                }
+                return (geoIndex + depth) % 20183;
+            });
+        }
 
 		private static IEnumerable<((Point, Tool) node, float cost)> Expander((Point pos, Tool tool) state)
 		{
@@ -108,7 +105,7 @@ namespace Day_22
 
 		private static IEnumerable<Tool> ValidToolsAt(Point p)
 		{
-			switch (erosionLevel[p.X, p.Y] % 3)
+			switch (GetErosionLevelAt(p) % 3)
 			{
 				case 0:
 					return new[] { Tool.Torch, Tool.Gear };
@@ -123,7 +120,7 @@ namespace Day_22
 
 		private static bool IsToolValidAt(Tool t, Point p)
 		{
-			return erosionLevel[p.X, p.Y] % 3 != (int) t;
+			return GetErosionLevelAt(p) % 3 != (int) t;
 		}
 
 		private static readonly Dictionary<Direction, Size> _mapDirectionToSize = new Dictionary<Direction, Size>
