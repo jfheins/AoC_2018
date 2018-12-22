@@ -15,15 +15,15 @@ namespace Day_22
 			var sw = new Stopwatch();
 			sw.Start();
 
-			erosionLevel = new ulong[target.X, target.Y];
+			erosionLevel = new ulong[target.X+1, target.Y+1];
 			var origin = new Point(0, 0);
 
 			const ulong xFactor = 16807;
 			const ulong yFactor = 48271;
 
-			for (int x = 0; x < target.X; x++)
+			for (int x = 0; x <= target.X; x++)
 			{
-				for (int y = 0; y < target.Y; y++)
+				for (int y = 0; y <= target.Y; y++)
 				{
 					var p = new Point(x, y);
 					ulong geoIndex = 0;
@@ -48,7 +48,16 @@ namespace Day_22
 				}
 			}
 
-			Console.WriteLine($"Part 1: ");
+			var risk = 0;
+			for (int x = 0; x <= target.X; x++)
+			{
+				for (int y = 0; y <= target.Y; y++)
+				{
+					risk += (int)(erosionLevel[x, y] % 3);
+				}
+			}
+
+			Console.WriteLine($"Part 1: {risk}");
 			Console.WriteLine($"Part 2: ");
 
 			sw.Stop();
