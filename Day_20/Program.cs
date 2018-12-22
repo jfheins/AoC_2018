@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Core;
+using MoreLinq;
 
 namespace Day_20
 {
@@ -37,7 +38,7 @@ namespace Day_20
 		{
 			var input = File.ReadAllText(@"../../../input.txt");
 			//input = @"^ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$";
-			input = @"^WSSEESWWWNW(S|NENNEEEENN(ESSSSW(NWSW|SSEN)|WSWWN(E|WWS(E|SS))))$";
+			//input = @"^WSSEESWWWNW(S|NENNEEEENN(ESSSSW(NWSW|SSEN)|WSWWN(E|WWS(E|SS))))$";
 			var sw = new Stopwatch();
 			sw.Start();
 
@@ -59,12 +60,11 @@ namespace Day_20
 
 			var bfs = new BreadthFirstSearch<Point, int>(EqualityComparer<Point>.Default, Expander);
 
-			var rooms = bfs.FindAll(new Point(0, 0), p => RoomsWithDoors[p].Count(x => x) == 3);
+			var rooms = bfs.FindAll(new Point(0, 0), p => RoomsWithDoors[p].Count(x => x) == 1);
 
-			foreach (var room in rooms)
-				Console.WriteLine($"Room {room.Target} has distance {room.Length}");
+			var cornerRoom = rooms.MaxBy(r => r.Length).First();
 
-			Console.WriteLine("Part 1: ");
+			Console.WriteLine($"Part 1: Room {cornerRoom.Target} is {cornerRoom.Length} away");
 			Console.WriteLine("Part 2: ");
 
 			sw.Stop();
@@ -276,6 +276,10 @@ namespace Day_20
 		public Literal(ReadOnlySpan<char> value)
 		{
 			Value = value.ToString();
+			if (Value.Contains('('))
+			{
+				throw new InvalidOperationException();
+			}
 		}
 
 		public Literal()
