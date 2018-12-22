@@ -36,27 +36,30 @@ namespace Day_20
 
 		private static void Main(string[] args)
 		{
-			var input = File.ReadAllText(@"../../../input.txt");
+            var input = File.ReadAllText(@"../../../input.txt");
+            //var input = "^abc(xyz)ccc(sdf)abc$";
 			//input = @"^ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$";
 			//input = @"^WSSEESWWWNW(S|NENNEEEENN(ESSSSW(NWSW|SSEN)|WSWWN(E|WWS(E|SS))))$";
 			var sw = new Stopwatch();
 			sw.Start();
 
 			var tree = ParseThing(input.AsSpan(1, input.Length - 2));
-
 			var paths = WalkAllRooms(tree as Sequence);
-			RoomsWithDoors.Add(new Point(0, 0), new bool[4]);
+            Console.WriteLine("parsing done, walking prepared");
+
+            RoomsWithDoors.Add(new Point(0, 0), new bool[4]);
+            var i = 0;
 			foreach (var path in paths)
 			{
-				if (path.Contains('('))
-				{
-					Console.WriteLine();
-				}
-				else
-				{
-					WalkPath(path);
-				}
-			}
+				WalkPath(path);
+                i++;
+                if (i%10000 == 0)
+                {
+                    Console.WriteLine($"Walked {i}");
+                }
+            }
+
+            Console.WriteLine("walking done");
 
 			var bfs = new BreadthFirstSearch<Point, int>(EqualityComparer<Point>.Default, Expander);
 
@@ -156,10 +159,13 @@ namespace Day_20
 			{
 				if (str[i] == '(')
 				{
-					if (i > segmentStart && level == 0)
-					{
-						// Prefix
-						result.Add(new Literal(str.Slice(segmentStart, i - segmentStart)));
+                    if (level == 0 && i > segmentStart)
+                    {
+                        // Prefix
+                        result.Add(new Literal(str.Slice(segmentStart, i - segmentStart)));
+                    }
+                    if (level == 0)
+                    {
 						segmentStart = i + 1;
 					}
 
@@ -181,8 +187,10 @@ namespace Day_20
 
 			if (segmentStart < str.Length)
 			{
-				// Suffix
-				result.Add(new Literal(str.Slice(segmentStart, str.Length - segmentStart)));
+                if(str[segmentStart] == '(' && str[str.Length - 1] == ')')
+                    result.Add(ParseThing(str.Slice(segmentStart+1, str.Length - segmentStart - 2)));
+                else
+                    result.Add(new Literal(str.Slice(segmentStart, str.Length - segmentStart)));
 			}
 
 			return result;
