@@ -18,7 +18,7 @@ namespace Day_20
 
         private static readonly Walker elf = new Walker();
         private static int leafs = 0;
-        private static readonly int maxLeafs = 7000000;
+        private static readonly int maxLeafs = 1000000;
 
         public static readonly Dictionary<char, Size> _mapDirectionToSize = new Dictionary<char, Size>
         {
