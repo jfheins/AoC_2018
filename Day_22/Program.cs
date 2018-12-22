@@ -9,29 +9,29 @@ namespace Day_22
 {
 	public class Program
 	{
-		private static ulong[,] erosionLevel;
+		private static int[,] erosionLevel;
 
 		private static void Main(string[] args)
 		{
-			ulong depth = 5913;
-			var target = new Point(8, 701);
+			int depth = 510;
+			var target = new Point(10, 10);
 			var sw = new Stopwatch();
 			sw.Start();
 
-			var padding = 100;
+			var padding = 300;
 
-			erosionLevel = new ulong[target.X + padding, target.Y + padding];
+			erosionLevel = new int[target.X + padding, target.Y + padding];
 			var origin = new Point(0, 0);
 
-			const ulong xFactor = 16807;
-			const ulong yFactor = 48271;
+			const int xFactor = 16807;
+			const int yFactor = 48271;
 
 			for (var x = 0; x < target.X + padding; x++)
 			{
 				for (var y = 0; y < target.Y + padding; y++)
 				{
 					var p = new Point(x, y);
-					ulong geoIndex = 0;
+					int geoIndex = 0;
 
 					if (p == origin || p == target)
 					{
@@ -39,11 +39,11 @@ namespace Day_22
 					}
 					else if (y == 0)
 					{
-						geoIndex = (ulong) x * xFactor;
+						geoIndex = (int) x * xFactor;
 					}
 					else if (x == 0)
 					{
-						geoIndex = (ulong) y * yFactor;
+						geoIndex = (int) y * yFactor;
 					}
 					else
 					{
@@ -66,12 +66,11 @@ namespace Day_22
 			var search = new DijkstraSearch<ValueTuple<Point, Tool>, Direction>(EqualityComparer<(Point, Tool)>.Default, Expander);
 
 
+			var path = search.FindFirst((origin, Tool.Torch),
+				tuple => tuple.Item1 == target && tuple.Item2 == Tool.Torch);
 
 
-
-
-
-			Console.WriteLine("Part 2: ");
+			Console.WriteLine($"Part 2: {path.Cost}");
 
 			sw.Stop();
 			Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
@@ -90,19 +89,41 @@ namespace Day_22
 			{
 				newPosition.Add(state.pos + _mapDirectionToSize[Direction.Up]);
 			}
-
 			newPosition.Add(state.pos + _mapDirectionToSize[Direction.Right]);
 			newPosition.Add(state.pos + _mapDirectionToSize[Direction.Down]);
 
+			foreach (var t in ValidToolsAt(state.pos).ExceptFor(state.tool))
+			{
+				yield return ((state.pos, t), 7);
+			}
+
 			foreach (var point in newPosition)
 			{
-				
+				if (IsToolValidAt(state.tool, point))
+				{
+					yield return ((point, state.tool), 1);
+				}
 			}
+		}
+
+		private static IEnumerable<Tool> ValidToolsAt(Point p)
+		{
+			switch (erosionLevel[p.X, p.Y] % 3)
+			{
+				case 0:
+					return new[] { Tool.Torch, Tool.Gear };
+				case 1:
+					return new[] { Tool.Gear, Tool.None };
+				case 2:
+					return new[] { Tool.Torch, Tool.None };
+			}
+
+			return null;
 		}
 
 		private static bool IsToolValidAt(Tool t, Point p)
 		{
-			return erosionLevel % 3 == (int) t;
+			return erosionLevel[p.X, p.Y] % 3 != (int) t;
 		}
 
 		private static readonly Dictionary<Direction, Size> _mapDirectionToSize = new Dictionary<Direction, Size>
