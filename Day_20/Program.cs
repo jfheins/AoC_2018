@@ -17,6 +17,7 @@ namespace Day_20
 		private static readonly Dictionary<Point, bool[]> RoomsWithDoors = new Dictionary<Point, bool[]>();
 
 		private static readonly Walker elf = new Walker();
+        private static bool isEnough = false;
 
 		public static readonly Dictionary<char, Size> _mapDirectionToSize = new Dictionary<char, Size>
 		{
@@ -44,20 +45,8 @@ namespace Day_20
 			sw.Start();
 
 			var tree = ParseThing(input.AsSpan(1, input.Length - 2));
-			var paths = WalkAllRooms(tree as Sequence);
-            Console.WriteLine("parsing done, walking prepared");
-
             RoomsWithDoors.Add(new Point(0, 0), new bool[4]);
-            var i = 0;
-			foreach (var path in paths)
-			{
-				WalkPath(path);
-                i++;
-                if (i%10000 == 0)
-                {
-                    Console.WriteLine($"Walked {i}");
-                }
-            }
+			WalkAllRooms(tree as Sequence);
 
             Console.WriteLine("walking done");
 
@@ -88,35 +77,45 @@ namespace Day_20
 		}
 
 
-		private static IEnumerable<string> WalkAllRooms(Sequence input)
+		private static void WalkAllRooms(Sequence input)
 		{
-			return WalkAllRooms(Enumerable.Empty<string>(), input.Parts);
+			WalkAllRooms(input.Parts);
 		}
 
-		private static IEnumerable<string> WalkAllRooms(IEnumerable<string> prefix, IEnumerable<RegexComponent> suffix)
+		private static void WalkAllRooms(IEnumerable<RegexComponent> suffix)
 		{
 			var first = suffix.FirstOrDefault();
-			if (first == null)
+			if (first == null || isEnough)
 			{
-				return string.Concat(prefix).ToEnumerable();
+                return;
 			}
 
 			if (first is Literal literal)
 			{
-				prefix = prefix.Concat(literal.Value.ToEnumerable());
-				return WalkAllRooms(prefix, suffix.Skip(1));
-			}
+                elf.Walk(literal.Value);
+                WalkAllRooms(suffix.Skip(1));
+                return;
+            }
 
 			if (first is Alternatives a)
 			{
-				return a.Parts.SelectMany(option => WalkAllRooms(prefix, option.ToEnumerable().Concat(suffix.Skip(1))));
+                var newSuffix = suffix.ToList();
+                foreach (var option in a.Parts)
+                {
+                    var oldpos = elf.Position;
+                    newSuffix[0] = option;
+                    WalkAllRooms(newSuffix);
+                    elf.Position = oldpos;
+                }
+                return;
 			}
 
 			if (first is Sequence s)
-			{
-				suffix = s.Parts.Concat(suffix.Skip(1));
-				return WalkAllRooms(prefix, suffix);
-			}
+            {
+                var newSuffix = s.Parts.Concat(suffix.Skip(1));
+                WalkAllRooms(newSuffix);
+                return;
+            }
 
 			throw new NotImplementedException();
 		}
@@ -260,9 +259,27 @@ namespace Day_20
 			public static int mapDirToIndex(char c)
 			{
 				return "WNES".IndexOf(c);
-			}
+            }
 
-			public void Walk(char direction)
+            public void WalkAndReset(string directions)
+            {
+                var oldPos = Position;
+                foreach (var c in directions)
+                {
+                    Walk(c);
+                }
+                Position = oldPos;
+            }
+
+            public void Walk(string directions)
+            {
+                foreach (var c in directions)
+                {
+                    Walk(c);
+                }
+            }
+
+            public void Walk(char direction)
 			{
 				RoomsWithDoors[Position][mapDirToIndex(direction)] = true;
 				Position += _mapDirectionToSize[direction];
