@@ -18,7 +18,6 @@ namespace Day_20
 
         private static readonly Walker elf = new Walker();
         private static int leafs = 0;
-        private static readonly int maxLeafs = 1000000;
 
         public static readonly Dictionary<char, Size> _mapDirectionToSize = new Dictionary<char, Size>
         {
@@ -56,7 +55,7 @@ namespace Day_20
             Console.WriteLine($"Walking took {sw.ElapsedMilliseconds}ms.");
 
             var bfs = new BreadthFirstSearch<Point, int>(EqualityComparer<Point>.Default, Expander);
-            
+            bfs.PerformParallelSearch = false;
             var rooms = bfs.FindAll2(new Point(0, 0), p => p.Distance >= 1000);
             var cornerRoom = rooms.MaxBy(r => r.Length).First();
 
@@ -84,7 +83,7 @@ namespace Day_20
         private static void WalkAllRooms(IEnumerable<RegexComponent> suffix)
         {
             var first = suffix.FirstOrDefault();
-            if (first == null || leafs > maxLeafs)
+            if (first == null)
             {
                 return;
             }
@@ -99,14 +98,13 @@ namespace Day_20
 
             if (first is Alternatives a)
             {
-                var newSuffix = suffix.ToList();
                 foreach (var option in a.Parts)
                 {
                     var oldpos = elf.Position;
-                    newSuffix[0] = option;
-                    WalkAllRooms(newSuffix);
+                    WalkAllRooms(option.ToEnumerable());
                     elf.Position = oldpos;
                 }
+                WalkAllRooms(suffix.Skip(1));
                 return;
             }
 
@@ -256,10 +254,6 @@ namespace Day_20
                 foreach (var i in way.Indicies)
                 {
                     Walk(i);
-                    if (RoomsWithDoors[Position].All(x => x))
-                    {
-                        break;
-                    }
                 }
             }
 
