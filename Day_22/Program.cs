@@ -13,12 +13,12 @@ namespace Day_22
 
 		private static void Main(string[] args)
 		{
-			int depth = 510;
-			var target = new Point(10, 10);
+			int depth = 5913;
+			var target = new Point(8, 701);
 			var sw = new Stopwatch();
 			sw.Start();
 
-			var padding = 300;
+			var padding = 800;
 
 			erosionLevel = new int[target.X + padding, target.Y + padding];
 			var origin = new Point(0, 0);
