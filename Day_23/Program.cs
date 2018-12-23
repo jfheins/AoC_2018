@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -9,26 +10,81 @@ using MoreLinq;
 
 namespace Day_23
 {
+   
+    public struct Point3 : IEquatable<Point3>
+    {
+        public static readonly Point3 Empty = new Point3(0, 0, 0);
+        
+        public Point3(int x, int y, int z)
+        {
+            X = x;
+            Y = y;
+            Z = z;
+        }
+
+        public bool IsEmpty => this.Equals(Point3.Empty);
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int Z { get; set; }
+
+        public bool Equals(Point3 other)
+        {
+            return (X == other.X) && (Y == other.Y) && (Z == other.Z);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(X, Y, Z);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return (obj is Point3 p) && Equals(p);
+        }
+    }
+
+    public class Nanobot
+    {
+        public Point3 Position { get; }
+        public int Radius { get; }
+
+        public Nanobot(Point3 pos, int radius)
+        {
+            Position = pos;
+            Radius = radius;
+        }
+
+        private static int ManhattanDist3D(Point3 a, Point3 b)
+        {
+            return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z);
+        }
+
+        public bool IsPointInRange(Point3 p)
+        {
+            return ManhattanDist3D(p, Position) <= Radius;
+        }
+    }
+
     class Program
     {
-        private static List<(int x, int y, int z, int r)> nanobots;
+        private static List<Nanobot> nanobots;
         static void Main(string[] args)
         {
             var input = File.ReadAllLines(@"../../../input.txt");
             var sw = new Stopwatch();
             sw.Start();
 
-            var origin = (0, 0, 0);
+            var origin = new Point3(0, 0, 0);
 
             nanobots = input.Select(ParseLine).ToList();
 
-            var largestRadius = nanobots.MaxBy(b => b.r).First();
-            var inRange = nanobots.Count(b => ManhattanDist3D(b, largestRadius) <= largestRadius.r);
+            var largestRadius = nanobots.MaxBy(b => b.Radius).First();
+            var inRange = nanobots.Count(b => largestRadius.IsPointInRange(b.Position));
 
             Console.WriteLine($"Part 1: {inRange} are in Range");
 
             // Gradient descent
-            (int x, int y, int z) currentPoint = origin;
+            Point3 currentPoint = origin;
 
             currentPoint = GradientDescent(currentPoint, 3200000);
             currentPoint = GradientDescent(currentPoint, 160000);
@@ -43,7 +99,7 @@ namespace Day_23
             Console.WriteLine($"Part 2: Point {currentPoint} has cost of {bestscore} :-)");
             Console.WriteLine($"It is in Range of {CountNanobotsInRange(currentPoint)} bots.");
 
-            var bestReception = AllPointsInDiamond((currentPoint.x, currentPoint.y, currentPoint.z, 17))
+            var bestReception = AllPointsInDiamond((currentPoint.X, currentPoint.Y, currentPoint.Z, 17))
                 .MaxBy(p => CountNanobotsInRange(p))
                 .OrderBy(p => ManhattanDist3D(p, origin))
                 .First();
@@ -59,7 +115,7 @@ namespace Day_23
             Console.ReadLine();
         }
 
-        private static (int x, int y, int z) GradientDescent((int x, int y, int z) start,
+        private static Point3 GradientDescent(Point3 start,
             int coarsening = 1)
         {
             var currentPoint = start;
@@ -83,72 +139,62 @@ namespace Day_23
             }
         }
 
-        private static (int, int, int) TranslateTowardsOrigin((int x, int y, int z) p, int distance)
+        private static Point3 TranslateTowardsOrigin(Point3 p, int distance)
         {
-            var x = p.x > 0 ? p.x - distance : p.x + distance;
-            var y = p.y > 0 ? p.y - distance : p.y + distance;
-            var z = p.z > 0 ? p.z - distance : p.z + distance;
-            return (x, y, z);
+            var x = p.X > 0 ? p.X - distance : p.X + distance;
+            var y = p.Y > 0 ? p.Y - distance : p.Y + distance;
+            var z = p.Z > 0 ? p.Z - distance : p.Z + distance;
+            return new Point3(x, y, z);
         }
 
-        private static IEnumerable<(int x, int y, int z)> GetCoarseNeightbors((int x, int y, int z) p, int coarsening)
+        private static IEnumerable<Point3> GetCoarseNeightbors(Point3 p, int coarsening)
         {
-            yield return (p.x + coarsening, p.y, p.z);
-            yield return (p.x - coarsening, p.y, p.z);
-            yield return (p.x, p.y + coarsening, p.z);
-            yield return (p.x, p.y - coarsening, p.z);
-            yield return (p.x, p.y, p.z + coarsening);
-            yield return (p.x, p.y, p.z - coarsening);
+            yield return new Point3(p.X + coarsening, p.Y, p.Z);
+            yield return new Point3(p.X - coarsening, p.Y, p.Z);
+            yield return new Point3(p.X, p.Y + coarsening, p.Z);
+            yield return new Point3(p.X, p.Y - coarsening, p.Z);
+            yield return new Point3(p.X, p.Y, p.Z + coarsening);
+            yield return new Point3(p.X, p.Y, p.Z - coarsening);
         }
 
-        private static IEnumerable<(int x, int y, int z)> GetAdjacentPoints((int x, int y, int z) p)
+        private static IEnumerable<Point3> GetAdjacentPoints(Point3 p)
         {
             return GetCoarseNeightbors(p, 1);
         }
 
-        private static long CalcNormalizedDistance((int x, int y, int z) point)
+        private static long CalcNormalizedDistance(Point3 point)
         {
             return nanobots.Sum(bot =>
             {
-                long dist = ManhattanDist3D((point.x, point.y, point.z, 0), bot);
-                return dist > bot.r ? (dist - bot.r) + 1000 : 0L;
+                long dist = ManhattanDist3D(point, bot.Position);
+                return dist > bot.Radius ? (dist - bot.Radius) + 1000 : 0L;
             });
         }
 
-        private static int CountNanobotsInRange((int x, int y, int z) p)
+        private static int CountNanobotsInRange(Point3 p)
         {
             return nanobots.Count(b => IsInRange(b, p));
         }
 
-        private static bool IsInRange((int x, int y, int z, int r) bot, (int x, int y, int z) point)
+        private static bool IsInRange(Nanobot bot, Point3 point)
         {
-            return ManhattanDist3D((point.x, point.y, point.z, 0), bot) <= bot.r;
+            return ManhattanDist3D(point, bot.Position) <= bot.Radius;
         }
 
-        private static IEnumerable<(int x, int y, int z)> AllPointsInDiamond((int x, int y, int z, int r) bot)
+        private static int ManhattanDist3D(Nanobot a, Nanobot b)
         {
-            var xRange = Enumerable.Range(bot.x - bot.r, 2 * bot.r + 1);
-            var yRange = Enumerable.Range(bot.y - bot.r, 2 * bot.r + 1);
-            var zRange = Enumerable.Range(bot.z - bot.r, 2 * bot.r + 1);
-            return xRange.Cartesian(yRange, (x, y) => (x, y))
-                .Cartesian(zRange, (t, z) => (t.x, t.y, z))
-                .Where(p => IsInRange(bot, p));
+            return ManhattanDist3D(a.Position, b.Position);
         }
 
-        private static int ManhattanDist3D((int x, int y, int z, int r) a, (int x, int y, int z, int r) b)
+        private static int ManhattanDist3D(Point3 a, Point3 b)
         {
-            return Math.Abs(a.x - b.x) + Math.Abs(a.y - b.y) + Math.Abs(a.z - b.z);
+            return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z);
         }
 
-        private static int ManhattanDist3D((int x, int y, int z) a, (int x, int y, int z) b)
-        {
-            return Math.Abs(a.x - b.x) + Math.Abs(a.y - b.y) + Math.Abs(a.z - b.z);
-        }
-
-        private static (int x, int y, int z, int r) ParseLine(string arg)
+        private static Nanobot ParseLine(string arg)
         {
             var ints = arg.ParseInts(4);
-            return (ints[0], ints[1], ints[2], ints[3]);
+            return new Nanobot(new Point3(ints[0], ints[1], ints[2]), ints[3]);
         }
     }
 }
