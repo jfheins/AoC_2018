@@ -5,16 +5,17 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using C5;
 using Core;
 using MoreLinq;
 
 namespace Day_23
 {
-   
+
     public struct Point3 : IEquatable<Point3>
     {
         public static readonly Point3 Empty = new Point3(0, 0, 0);
-        
+
         public Point3(int x, int y, int z)
         {
             X = x;
@@ -40,6 +41,83 @@ namespace Day_23
         public override bool Equals(object obj)
         {
             return (obj is Point3 p) && Equals(p);
+        }
+
+        public Point3 TranslateBy(int dx, int dy, int dz)
+        {
+            return new Point3(X + dx, Y + dy, Z + dz);
+        }
+    }
+
+    public class Cube : IComparable<Cube>
+    {
+        public Point3 BottomLeft { get; set; }
+        public Point3 TopRight => BottomLeft.TranslateBy(SideLength, SideLength, SideLength);
+        public int SideLength { get; set; }
+        public IPriorityQueueHandle<Cube> Handle { get; set; } = null;
+
+        public int NanobotsInRange { get; set; } = 0;
+
+        public Cube(Point3 root, int side)
+        {
+            BottomLeft = root;
+            SideLength = side;
+        }
+
+        public int CompareTo(Cube other)
+        {
+            return NanobotsInRange.CompareTo(other.NanobotsInRange);
+        }
+
+        public Point3 Center => BottomLeft.TranslateBy(SideLength/2, SideLength/2, SideLength/2);
+
+        public IEnumerable<Point3> GetEdgePoints()
+        {
+            for (int x = BottomLeft.X; x < TopRight.X; x++)
+            {
+                yield return new Point3(x, BottomLeft.Y, BottomLeft.Z);
+                yield return new Point3(x, BottomLeft.Y, TopRight.Z - 1);
+                yield return new Point3(x, TopRight.Y - 1, BottomLeft.Z);
+                yield return new Point3(x, TopRight.Y - 1, TopRight.Z - 1);
+            }
+            for (int y = BottomLeft.Y; y < TopRight.Y; y++)
+            {
+                yield return new Point3(BottomLeft.X, y, BottomLeft.Z);
+                yield return new Point3(BottomLeft.X, y, TopRight.Z - 1);
+                yield return new Point3(TopRight.X - 1, y, BottomLeft.Z);
+                yield return new Point3(TopRight.X - 1, y, TopRight.Z - 1);
+            }
+            for (int z = BottomLeft.Z; z < TopRight.Z; z++)
+            {
+                yield return new Point3(BottomLeft.X, BottomLeft.Y, z);
+                yield return new Point3(BottomLeft.X, TopRight.Y - 1, z);
+                yield return new Point3(TopRight.X - 1, BottomLeft.Y, z);
+                yield return new Point3(TopRight.X - 1, TopRight.Y - 1, z);
+            }
+        }
+
+        internal static IEnumerable<Cube> Split(Cube c)
+        {
+            var halfSide = c.SideLength / 2;
+            var halfX = c.BottomLeft.X + halfSide;
+            var halfY = c.BottomLeft.Y + halfSide;
+            var halfZ = c.BottomLeft.Z + halfSide;
+
+            yield return new Cube(c.BottomLeft, c.SideLength / 2);
+            yield return new Cube(c.BottomLeft.TranslateBy(halfSide, 0, 0), c.SideLength / 2);
+            yield return new Cube(c.BottomLeft.TranslateBy(0, halfSide, 0), c.SideLength / 2);
+            yield return new Cube(c.BottomLeft.TranslateBy(0, 0, halfSide), c.SideLength / 2);
+            yield return new Cube(c.BottomLeft.TranslateBy(halfSide, halfSide, 0), c.SideLength / 2);
+            yield return new Cube(c.BottomLeft.TranslateBy(halfSide, 0, halfSide), c.SideLength / 2);
+            yield return new Cube(c.BottomLeft.TranslateBy(0, halfSide, halfSide), c.SideLength / 2);
+            yield return new Cube(c.BottomLeft.TranslateBy(halfSide, halfSide, halfSide), c.SideLength / 2);
+        }
+
+        public bool Contains (Point3 p)
+        {
+            return (p.X >= BottomLeft.X && p.X < TopRight.X)
+                && (p.Y >= BottomLeft.Y && p.Y < TopRight.Y)
+                && (p.Z >= BottomLeft.Z && p.Z < TopRight.Z);
         }
     }
 
@@ -84,31 +162,48 @@ namespace Day_23
             Console.WriteLine($"Part 1: {inRange} are in Range");
 
             // Gradient descent
-            Point3 currentPoint = origin;
+            var minx = nanobots.Min(b => b.Position.X);
+            var miny = nanobots.Min(b => b.Position.Y);
+            var minz = nanobots.Min(b => b.Position.Z);
+            var side = 1 << 30;
+            var initialQuad = new Cube(new Point3(minx, miny, minz), side);
 
-            currentPoint = GradientDescent(currentPoint, 3200000);
-            currentPoint = GradientDescent(currentPoint, 160000);
-            currentPoint = GradientDescent(currentPoint, 8000);
-            currentPoint = GradientDescent(currentPoint, 400);
-            currentPoint = GradientDescent(currentPoint, 20);
-            currentPoint = GradientDescent(currentPoint);
+            var prioQueue = new C5.IntervalHeap<Cube>();
 
-            Console.WriteLine($"Gradient descent landed at {currentPoint}");
+            initialQuad.NanobotsInRange = nanobots.Count(b => IntersectCubeWithOctogon(initialQuad, b));
+            prioQueue.Add(initialQuad);
 
-            long bestscore = CalcNormalizedDistance(currentPoint);
-            Console.WriteLine($"Part 2: Point {currentPoint} has cost of {bestscore} :-)");
-            Console.WriteLine($"It is in Range of {CountNanobotsInRange(currentPoint)} bots.");
+            var seenmax = 0;
+            var maxPosition = Point3.Empty;
+            while (true)
+            {
+                var next = prioQueue.DeleteMax();
+                
+                if (next.SideLength == 1)
+                {
+                    if (next.NanobotsInRange > seenmax)
+                    { 
+                        seenmax = next.NanobotsInRange;
+                        maxPosition = next.BottomLeft;
+                    }
+                    else
+                        break;
+                }
 
-            var bestReception = AllPointsInDiamond((currentPoint.X, currentPoint.Y, currentPoint.Z, 17))
-                .MaxBy(p => CountNanobotsInRange(p))
-                .OrderBy(p => ManhattanDist3D(p, origin))
-                .First();
+                var smallerCubes = Cube.Split(next);
+                foreach (var cube in smallerCubes)
+                {
+                    cube.NanobotsInRange = nanobots.Count(b => IntersectCubeWithOctogon(cube, b));
+                    prioQueue.Add(initialQuad);
+                }
+            }
 
-            bestscore = CalcNormalizedDistance(bestReception);
+            var bestReception = maxPosition;
+            var bestscore = CalcNormalizedDistance(bestReception);
 
             Console.WriteLine($"Part 2: Point {bestReception} has cost of {bestscore} :-)");
             Console.WriteLine($"It is in Range of {CountNanobotsInRange(bestReception)} bots.");
-            Console.WriteLine($"Distance: {ManhattanDist3D(origin, currentPoint)}");
+            Console.WriteLine($"Distance: {ManhattanDist3D(origin, maxPosition)}");
 
             sw.Stop();
             Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
@@ -160,6 +255,32 @@ namespace Day_23
         private static IEnumerable<Point3> GetAdjacentPoints(Point3 p)
         {
             return GetCoarseNeightbors(p, 1);
+        }
+
+        private static bool IntersectCubeWithOctogon(Cube c, Nanobot bot)
+        {
+            var dist = ManhattanDist3D(c.Center, bot.Position);
+            var halfLength = c.SideLength / 2;
+            if (dist > bot.Radius + (halfLength * 3))
+            {
+                return false;
+            }
+            if (dist < bot.Radius + halfLength)
+            {
+                return false;
+            }
+            if (c.Contains(bot.Position))
+            {
+                return true;
+            }
+            foreach (var p in c.GetEdgePoints())
+            {
+                if (bot.IsPointInRange(p))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private static long CalcNormalizedDistance(Point3 point)
