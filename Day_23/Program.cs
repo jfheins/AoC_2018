@@ -30,17 +30,20 @@ namespace Day_23
             // Gradient descent
             (int x, int y, int z) currentPoint = origin;
 
-            currentPoint = GradientDescent(currentPoint, GetCoarseNeightbors);
-            Console.WriteLine($"Coarse search returned {currentPoint}");
-            // Closer to origin to get closest point with lowest cost
-            currentPoint = (currentPoint.x - 10000, currentPoint.y - 10000, currentPoint.z - 10000);
-            currentPoint = GradientDescent(currentPoint, GetAdjacentPoints);
+            currentPoint = GradientDescent(currentPoint, 3200000);
+            currentPoint = GradientDescent(currentPoint, 160000);
+            currentPoint = GradientDescent(currentPoint, 8000);
+            currentPoint = GradientDescent(currentPoint, 400);
+            currentPoint = GradientDescent(currentPoint, 20);
+            currentPoint = GradientDescent(currentPoint);
+
+            Console.WriteLine($"Gradient descent landed at {currentPoint}");
 
             long bestscore = CalcNormalizedDistance(currentPoint);
             Console.WriteLine($"Part 2: Point {currentPoint} has cost of {bestscore} :-)");
             Console.WriteLine($"It is in Range of {CountNanobotsInRange(currentPoint)} bots.");
 
-            var bestReception = AllPointsInDiamond((currentPoint.x, currentPoint.y, currentPoint.z, 80))
+            var bestReception = AllPointsInDiamond((currentPoint.x, currentPoint.y, currentPoint.z, 17))
                 .MaxBy(p => CountNanobotsInRange(p))
                 .OrderBy(p => ManhattanDist3D(p, origin))
                 .First();
@@ -56,18 +59,23 @@ namespace Day_23
             Console.ReadLine();
         }
 
-        private static (int x, int y, int z) GradientDescent((int x, int y, int z) start, Func<(int x, int y, int z), IEnumerable<(int x, int y, int z)>> expander)
+        private static (int x, int y, int z) GradientDescent((int x, int y, int z) start,
+            int coarsening = 1)
         {
             var currentPoint = start;
             long bestscore = long.MaxValue;
             while (true)
             {
-                var gradients = expander(currentPoint)
+                var gradients = GetCoarseNeightbors(currentPoint, coarsening)
                     .Select(p => (p, cost: CalcNormalizedDistance(p)))
                     .ToList();
                 var next = gradients.MinBy(x => x.cost).First();
                 if (next.cost >= bestscore)
                 {
+                    if (coarsening > 1)
+                    {
+                        return TranslateTowardsOrigin(currentPoint, 2*coarsening);
+                    }
                     return currentPoint;
                 }
                 currentPoint = next.p;
@@ -75,24 +83,27 @@ namespace Day_23
             }
         }
 
-        private static IEnumerable<(int x, int y, int z)> GetCoarseNeightbors((int x, int y, int z) p)
+        private static (int, int, int) TranslateTowardsOrigin((int x, int y, int z) p, int distance)
         {
-            yield return (p.x + 10000, p.y, p.z);
-            yield return (p.x - 10000, p.y, p.z);
-            yield return (p.x, p.y + 10000, p.z);
-            yield return (p.x, p.y - 10000, p.z);
-            yield return (p.x, p.y, p.z + 10000);
-            yield return (p.x, p.y, p.z - 10000);
+            var x = p.x > 0 ? p.x - distance : p.x + distance;
+            var y = p.y > 0 ? p.y - distance : p.y + distance;
+            var z = p.z > 0 ? p.z - distance : p.z + distance;
+            return (x, y, z);
+        }
+
+        private static IEnumerable<(int x, int y, int z)> GetCoarseNeightbors((int x, int y, int z) p, int coarsening)
+        {
+            yield return (p.x + coarsening, p.y, p.z);
+            yield return (p.x - coarsening, p.y, p.z);
+            yield return (p.x, p.y + coarsening, p.z);
+            yield return (p.x, p.y - coarsening, p.z);
+            yield return (p.x, p.y, p.z + coarsening);
+            yield return (p.x, p.y, p.z - coarsening);
         }
 
         private static IEnumerable<(int x, int y, int z)> GetAdjacentPoints((int x, int y, int z) p)
         {
-            yield return (p.x + 1, p.y, p.z);
-            yield return (p.x - 1, p.y, p.z);
-            yield return (p.x, p.y + 1, p.z);
-            yield return (p.x, p.y - 1, p.z);
-            yield return (p.x, p.y, p.z + 1);
-            yield return (p.x, p.y, p.z - 1);
+            return GetCoarseNeightbors(p, 1);
         }
 
         private static long CalcNormalizedDistance((int x, int y, int z) point)
