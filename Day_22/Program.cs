@@ -17,7 +17,7 @@ namespace Day_22
 		{
 			depth = 5913;
 			origin = new Point(0, 0);
-			var target = new Point(8, 701);
+			target = new Point(8, 701);
 
 			var sw = new Stopwatch();
 			sw.Start();
@@ -26,7 +26,7 @@ namespace Day_22
 			for (var x = 0; x <= target.X; x++)
 			{
 				for (var y = 0; y <= target.Y; y++)
-					risk += (int) (GetErosionLevelAt(new Point(x, y)) % 3);
+					risk += (GetErosionLevelAt(new Point(x, y)) % 3);
 			}
 
 			Console.WriteLine($"Part 1: {risk}");
