@@ -14,48 +14,72 @@ namespace Day_24
         {
 
             var immuneSystem = File.ReadAllLines(@"../../../ImmuneSystem.txt")
-                .Select(l => BattleGroup.FromString(l, "ImSy"));
+                .Select(l => BattleGroup.FromString(l, "ImSy")).ToList();
 
             var infection = File.ReadAllLines(@"../../../Infection.txt")
-                .Select(l => BattleGroup.FromString(l,"Infect"));
+                .Select(l => BattleGroup.FromString(l,"Infect")).ToList();
 
             var sw = new Stopwatch();
             sw.Start();
-            
-            var combat = new CombatSimulator(immuneSystem, infection);
 
-            while (!combat.Groups.Select(g => g.Team).AreAllEqual())
+            for (int boost = 29; boost < 32; boost++)
             {
-                // Target selection
-                var mapAttackerToVictim = new Dictionary<BattleGroup, BattleGroup>();
-                foreach (var group in combat.Groups.OrderByDescending(g => g.EffectivePower).ThenByDescending(g => g.Initiative))
-                {
-                    var target = combat.EnemyGroupsFor(group)
-                        .Except(mapAttackerToVictim.Values)
-                        .OrderByDescending(t => group.PotentialDamageTo(t))
-                        .ThenByDescending(t => t.EffectivePower)
-                        .ThenByDescending(t => t.Initiative)
-                        .Where(t => group.PotentialDamageTo(t) > 0)
-                        .FirstOrDefault();
+                Console.WriteLine($"Boosting by {boost} ... ");
 
-                    if (target != null)
+                immuneSystem = File.ReadAllLines(@"../../../ImmuneSystem.txt")
+                .Select(l => BattleGroup.FromString(l, "ImSy")).ToList();
+                foreach (var g in immuneSystem)
+                {
+                    g.AttackDamage += boost;
+                }
+                infection = File.ReadAllLines(@"../../../Infection.txt")
+                .Select(l => BattleGroup.FromString(l, "Infect")).ToList();
+
+                Console.WriteLine($"ImSy strength: {immuneSystem.Sum(g => g.EffectivePower)}");
+                Console.WriteLine($"Infect strength: {infection.Sum(g => g.EffectivePower)}");
+
+                var combat = new CombatSimulator(immuneSystem, infection);
+
+                while (!combat.Groups.Select(g => g.Team).AreAllEqual())
+                {
+                    // Target selection
+                    var mapAttackerToVictim = new Dictionary<BattleGroup, BattleGroup>();
+                    foreach (var group in combat.Groups.OrderByDescending(g => g.EffectivePower).ThenByDescending(g => g.Initiative))
                     {
-                        mapAttackerToVictim.Add(group, target);
+                        var target = combat.EnemyGroupsFor(group)
+                            .Except(mapAttackerToVictim.Values)
+                            .OrderByDescending(t => group.PotentialDamageTo(t))
+                            .ThenByDescending(t => t.EffectivePower)
+                            .ThenByDescending(t => t.Initiative)
+                            .Where(t => group.PotentialDamageTo(t) > 0)
+                            .FirstOrDefault();
+
+                        if (target != null)
+                        {
+                            mapAttackerToVictim.Add(group, target);
+                        }
                     }
+
+                    // Fight
+                    foreach (var pair in mapAttackerToVictim.OrderByDescending(kvp => kvp.Key.Initiative))
+                    {
+                        if (pair.Key.UnitCount > 0)
+                        {
+                            pair.Key.Attack(pair.Value);
+                        }
+                    }
+                    combat.Groups.RemoveAll(g => g.UnitCount <= 0);
                 }
 
-                // Fight
-                foreach (var pair in mapAttackerToVictim.OrderByDescending(kvp => kvp.Key.Initiative))
-                {
-                    if (pair.Key.UnitCount > 0)
-                    {
-                        pair.Key.Attack(pair.Value);
-                    }
-                }
-                combat.Groups.RemoveAll(g => g.UnitCount <= 0);
+                Console.WriteLine($"Winning side: {combat.Groups.First().Team}");
+                Console.WriteLine($"Remaining units: {combat.Groups.Sum(g => g.UnitCount)}");
+                Console.WriteLine();
             }
+            
+           
 
-            Console.WriteLine($"Part 1: {combat.Groups.Sum(g => g.UnitCount)}");
+
+            //Console.WriteLine($"Part 1: {combat.Groups.Sum(g => g.UnitCount)}");
             Console.WriteLine($"Part 2: x");
 
             sw.Stop();
