@@ -45,7 +45,7 @@ namespace Day_24
                 }
 
                 // Fight
-                foreach (var pair in mapAttackerToVictim.OrderBy(kvp => kvp.Key.Initiative))
+                foreach (var pair in mapAttackerToVictim.OrderByDescending(kvp => kvp.Key.Initiative))
                 {
                     if (pair.Key.UnitCount > 0)
                     {
@@ -95,7 +95,7 @@ namespace Day_24
         public int Initiative { get; set; }
         public string Team { get; set; }
 
-        public int EffectivePower => UnitCount * HitPoints;
+        public int EffectivePower => UnitCount * AttackDamage;
 
         public BattleGroup()
         {
