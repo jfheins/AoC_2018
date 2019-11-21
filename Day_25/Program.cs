@@ -7,11 +7,11 @@ using System.Linq;
 
 namespace Day_25
 {
-    class Program
+    public class Program
     {
         private static List<List<Point4>> Constellations;
 
-        static void Main(string[] args)
+        static void Main()
         {
             var input = File.ReadAllLines(@"../../../input.txt");
 
@@ -35,7 +35,7 @@ namespace Day_25
                 }
                 else
                 {
-                    Constellations.RemoveAll(it => matching.Contains(it));
+                    _ = Constellations.RemoveAll(it => matching.Contains(it));
                     var merged = matching.SelectMany(x => x).ToList();
                     merged.Add(newPoint);
                     Constellations.Add(merged);
@@ -47,7 +47,7 @@ namespace Day_25
             Console.WriteLine($"Part 1: {Constellations.Count} constellations");
 
             Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
-            Console.ReadLine();
+            _ = Console.ReadLine();
         }
 
         private static IEnumerable<List<Point4>> FindIntersectingConstellations(Point4 point, List<List<Point4>> constellations)
@@ -71,45 +71,6 @@ namespace Day_25
         private static int ManhattanDist4D(Point4 a, Point4 b)
         {
             return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z) + Math.Abs(a.T - b.T);
-        }
-    }
-
-    public struct Point4 : IEquatable<Point4>
-    {
-        public static readonly Point4 Empty = new Point4(0, 0, 0, 0);
-
-        public Point4(int x, int y, int z, int t)
-        {
-            X = x;
-            Y = y;
-            Z = z;
-            T = t;
-        }
-
-        public bool IsEmpty => this.Equals(Point4.Empty);
-        public int X { get; set; }
-        public int Y { get; set; }
-        public int Z { get; set; }
-        public int T { get; set; }
-
-        public bool Equals(Point4 other)
-        {
-            return (X == other.X) && (Y == other.Y) && (Z == other.Z) && (T == other.T);
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(X, Y, Z, T);
-        }
-
-        public override bool Equals(object obj)
-        {
-            return (obj is Point4 p) && Equals(p);
-        }
-
-        public Point4 TranslateBy(int dx, int dy, int dz,  int dt)
-        {
-            return new Point4(X + dx, Y + dy, Z + dz, T + dt);
         }
     }
 }
