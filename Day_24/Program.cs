@@ -19,7 +19,7 @@ namespace Day_24
             var sw = new Stopwatch();
             sw.Start();
 
-            for (int boost = 0; boost < 32; boost++)
+            for (var boost = 0; boost < 32; boost++)
             {
                 Console.WriteLine($"Boosting by {boost} ... ");
 
