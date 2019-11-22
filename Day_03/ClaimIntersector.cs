@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
+
 using Core.Combinatorics;
 
 namespace Day_03
@@ -40,7 +39,7 @@ namespace Day_03
             var count = stripes.AsParallel().Select(s =>
                 s.Value.SelectMany(claim => Enumerable.Range(claim.Area.Bottom, claim.Area.Height)).Distinct().Count());
 
-            
+
 
             return count.ToList().Sum();
         }
@@ -67,7 +66,9 @@ namespace Day_03
 
             var groups = regex.Match(line).Groups;
             Debug.Assert(groups.Count == 6);
-            var numbers = groups.Skip(1).Select(g => int.Parse(g.Value)).ToArray();
+            var numbers = groups.Skip<Group>(1)
+                                .Select(g => int.Parse(g.Value))
+                                .ToArray();
             return new Claim(numbers[0], new Rectangle(numbers[1], numbers[2], numbers[3], numbers[4]));
         }
 

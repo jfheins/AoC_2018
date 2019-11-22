@@ -56,7 +56,7 @@ namespace Day_20
 
             var bfs = new BreadthFirstSearch<Point, int>(EqualityComparer<Point>.Default, Expander);
             bfs.PerformParallelSearch = false;
-            var rooms = bfs.FindAll2(new Point(0, 0), p => p.Distance >= 1000);
+            var rooms = bfs.FindAll(new Point(0, 0), p => p.Distance >= 1000);
             var cornerRoom = rooms.MaxBy(r => r.Length).First();
 
             Console.WriteLine($"Part 1: Room {cornerRoom.Target} is {cornerRoom.Length} away");
