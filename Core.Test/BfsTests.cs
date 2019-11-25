@@ -16,7 +16,7 @@ namespace Core.Test
         public void FindsInitialNode()
         {
             var bfs = new BreadthFirstSearch<int, int>(EqualityComparer<int>.Default, _ => Enumerable.Empty<int>());
-            var result = bfs.FindAll(33, x => true);
+            var result = bfs.FindAll(33, x => x > 0);
 
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual(0, result[0].Length);
@@ -28,7 +28,7 @@ namespace Core.Test
         public void ReturnsEmptySetIfNothingFound()
         {
             var bfs = new BreadthFirstSearch<int, int>(EqualityComparer<int>.Default, _ => Enumerable.Empty<int>());
-            var result = bfs.FindAll(0, x => false);
+            var result = bfs.FindAll(0, x => x < 0);
 
             Assert.AreEqual(0, result.Count);
         }
@@ -83,7 +83,7 @@ namespace Core.Test
                 EqualityComparer<int>.Default,
                 (int x) => (x > 100) ? Enumerable.Empty<int>() : new[] { x * 2, x * 3 });
 
-            var result = bfs.FindAll2(1, node => node.Distance > 4);
+            var result = bfs.FindAll(1, node => node.Distance > 4);
 
             Assert.AreEqual(13, result.Count);
         }
@@ -93,7 +93,7 @@ namespace Core.Test
         {
             var bfs = new BreadthFirstSearch<int, int>(EqualityComparer<int>.Default, x => new[] { x * 2, x * 3 });
 
-            var result = bfs.FindAll2(1, node => node.Predecessor?.Current == 64, null, 1);
+            var result = bfs.FindAll(1, node => node.Predecessor?.Current == 64, null, 1);
 
             Assert.IsTrue(result.Count == 1 || result.Count == 2);
             Assert.IsTrue(result.All(x => x.Target == 128 || x.Target == 192));
