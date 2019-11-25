@@ -15,9 +15,9 @@ namespace Day_22
 
         private static void Main(string[] args)
         {
-			depth = 5913;
+            depth = 5913;
             origin = new Point(0, 0);
-			target = new Point(8, 701);
+            target = new Point(8, 701);
 
             var sw = new Stopwatch();
             sw.Start();
@@ -29,23 +29,25 @@ namespace Day_22
                     risk += (GetErosionLevelAt(new Point(x, y)) % 3);
             }
 
-            Console.WriteLine($"Part 1: {risk}");
+            Console.WriteLine($"Part 1: {risk}"); // 6256
 
-            var search = new DijkstraSearch<ValueTuple<Point, Tool>, Direction>(EqualityComparer<(Point, Tool)>.Default, Expander);
+            var search = new DijkstraSearch<ValueTuple<Point, Tool>, Direction>(
+                EqualityComparer<(Point, Tool)>.Default,
+                Expander);
 
-
-            var path = search.FindFirst((origin, Tool.Torch),
+            var path = search.FindFirst(
+                (origin, Tool.Torch),
                 tuple => tuple.Item1 == target && tuple.Item2 == Tool.Torch);
 
 
-            Console.WriteLine($"Part 2: {path.Cost}");
+            Console.WriteLine($"Part 2: {path.Cost}"); // 973
 
             sw.Stop();
             Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
             Console.ReadLine();
         }
 
-        private static Dictionary<Point, int> erosionLevelCache = new Dictionary<Point, int>();
+        private static readonly Dictionary<Point, int> erosionLevelCache = new Dictionary<Point, int>();
         private static readonly Size left = new Size(-1, 0);
         private static readonly Size up = new Size(0, -1);
 
