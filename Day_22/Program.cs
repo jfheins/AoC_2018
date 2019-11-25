@@ -31,20 +31,25 @@ namespace Day_22
 
             Console.WriteLine($"Part 1: {risk}"); // 6256
 
-            var search = new DijkstraSearch<ValueTuple<Point, Tool>>(
+            var search = new AStarSearch<ValueTuple<Point, Tool>>(
                 EqualityComparer<(Point, Tool)>.Default,
                 Expander);
 
             var path = search.FindFirst(
                 (origin, Tool.Torch),
-                tuple => tuple.Item1 == target && tuple.Item2 == Tool.Torch);
-
+                tuple => tuple.Item1 == target && tuple.Item2 == Tool.Torch,
+                tuple => GetDistance(tuple.Item1, target));
 
             Console.WriteLine($"Part 2: {path.Cost}"); // 973
 
             sw.Stop();
             Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
             Console.ReadLine();
+        }
+
+        private static int GetDistance(Point a, Point b)
+        {
+            return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
         }
 
         private static readonly Dictionary<Point, int> erosionLevelCache = new Dictionary<Point, int>();
