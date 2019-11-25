@@ -93,7 +93,7 @@ namespace Core.Test
         {
             var bfs = new BreadthFirstSearch<int, int>(EqualityComparer<int>.Default, x => new[] { x * 2, x * 3 });
 
-            var result = bfs.FindAll(1, node => node.Predecessor?.Current == 64, null, 1);
+            var result = bfs.FindAll(1, node => node.Predecessor?.Item == 64, null, 1);
 
             Assert.IsTrue(result.Count == 1 || result.Count == 2);
             Assert.IsTrue(result.All(x => x.Target == 128 || x.Target == 192));
