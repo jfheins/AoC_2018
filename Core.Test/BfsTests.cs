@@ -5,33 +5,23 @@ using System;
 using System.Drawing;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Core.Test
 {
     [TestClass]
     public class BfsTests
     {
-        public BreadthFirstSearch<Point, Size> Setup()
-        {
-            static IEnumerable<Point> Expander(Point p)
-            {
-                yield return p + new Size(1, 0);
-                yield return p + new Size(0, 1);
-            }
-
-            return new BreadthFirstSearch<Point, Size>(EqualityComparer<Point>.Default, Expander);
-        }
-
         [TestMethod]
         public void FindsInitialNode()
         {
             var bfs = new BreadthFirstSearch<int, int>(EqualityComparer<int>.Default, _ => Enumerable.Empty<int>());
-            var result = bfs.FindAll(0, x => true);
+            var result = bfs.FindAll(33, x => true);
 
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual(0, result[0].Length);
             Assert.AreEqual(1, result[0].Steps.Length);
-            Assert.AreEqual(0, result[0].Steps[0]);
+            Assert.AreEqual(33, result[0].Steps[0]);
         }
 
         [TestMethod]
@@ -103,9 +93,64 @@ namespace Core.Test
         {
             var bfs = new BreadthFirstSearch<int, int>(EqualityComparer<int>.Default, x => new[] { x * 2, x * 3 });
 
-            var result = bfs.FindAll2(1, node => node.Predecessor?.Current == 64, null, 2);
+            var result = bfs.FindAll2(1, node => node.Predecessor?.Current == 64, null, 1);
 
+            Assert.IsTrue(result.Count == 1 || result.Count == 2);
             Assert.IsTrue(result.All(x => x.Target == 128 || x.Target == 192));
+        }
+
+        [TestMethod]
+        public void SearchIsExhaustive()
+        {
+            var expansionCount = 0;
+
+            IEnumerable<Point> Expander(Point p)
+            {
+                expansionCount++;
+                if (p.X + p.Y >= 100)
+                    yield break;
+
+                yield return p + new Size(1, 0);
+                yield return p + new Size(0, 1);
+            }
+
+            var bfs = new BreadthFirstSearch<Point, Size>(EqualityComparer<Point>.Default, Expander)
+            {
+                PerformParallelSearch = false
+            };
+
+            var result = bfs.FindAll(Point.Empty, p => (p.X + p.Y) % 5 == 0);
+
+            var resultCount = (100 / 5 * (100 + 5) / 2) + (100 / 5) + 1;
+            Assert.AreEqual(resultCount, result.Count);
+            Assert.AreEqual(5151, expansionCount);
+        }
+
+        [TestMethod]
+        public void ParallelSearchIsExhaustive()
+        {
+            var expansionCount = 0;
+
+            IEnumerable<Point> Expander(Point p)
+            {
+                _ = Interlocked.Increment(ref expansionCount);
+                if (p.X + p.Y >= 100)
+                    yield break;
+
+                yield return p + new Size(1, 0);
+                yield return p + new Size(0, 1);
+            }
+
+            var bfs = new BreadthFirstSearch<Point, Size>(EqualityComparer<Point>.Default, Expander)
+            {
+                PerformParallelSearch = true
+            };
+
+            var result = bfs.FindAll(Point.Empty, p => (p.X + p.Y) % 5 == 0);
+
+            var resultCount = (100 / 5 * (100 + 5) / 2) + (100 / 5) + 1;
+            Assert.AreEqual(resultCount, result.Count);
+            Assert.AreEqual(5151, expansionCount);
         }
     }
 }
