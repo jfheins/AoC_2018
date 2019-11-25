@@ -15,7 +15,7 @@ namespace Core.Test
         [TestMethod]
         public void FindsInitialNode()
         {
-            var search = new DijkstraSearch<int, int>(
+            var search = new DijkstraSearch<int>(
                 EqualityComparer<int>.Default,
                 _ => Enumerable.Empty<(int, float)>());
 
@@ -30,7 +30,7 @@ namespace Core.Test
         [TestMethod]
         public void ReturnsEmptySetIfNothingFound()
         {
-            var search = new DijkstraSearch<int, int>(EqualityComparer<int>.Default, _ => Enumerable.Empty<(int, float)>());
+            var search = new DijkstraSearch<int>(EqualityComparer<int>.Default, _ => Enumerable.Empty<(int, float)>());
             var result = search.FindAll(0, x => false);
 
             Assert.AreEqual(0, result.Count);
@@ -56,7 +56,7 @@ namespace Core.Test
         [TestMethod]
         public void FindsFirstTarget()
         {
-            var search = new DijkstraSearch<int, int>(EqualityComparer<int>.Default, InfiniteExpander);
+            var search = new DijkstraSearch<int>(EqualityComparer<int>.Default, InfiniteExpander);
             var result = search.FindFirst(1, x => x == 192);
 
             Assert.AreEqual(1, result.Steps.First());
@@ -68,7 +68,7 @@ namespace Core.Test
         [TestMethod]
         public void FindTargetSetInInfiniteGraph()
         {
-            var search = new DijkstraSearch<int, int>(EqualityComparer<int>.Default, InfiniteExpander);
+            var search = new DijkstraSearch<int>(EqualityComparer<int>.Default, InfiniteExpander);
 
             var result = search.FindAll(1, x => x < 30, null, 12);
 
@@ -83,7 +83,7 @@ namespace Core.Test
         [TestMethod]
         public void FindAllTargetsInFiniteGraph()
         {
-            var search = new DijkstraSearch<int, int>(
+            var search = new DijkstraSearch<int>(
                 EqualityComparer<int>.Default,
                 FiniteExpander);
 
@@ -100,7 +100,7 @@ namespace Core.Test
         [TestMethod]
         public void FindAllTargetsWithDistance()
         {
-            var search = new DijkstraSearch<int, int>(
+            var search = new DijkstraSearch<int>(
                 EqualityComparer<int>.Default,
                 FiniteExpander);
 

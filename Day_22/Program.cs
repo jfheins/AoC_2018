@@ -31,7 +31,7 @@ namespace Day_22
 
             Console.WriteLine($"Part 1: {risk}"); // 6256
 
-            var search = new DijkstraSearch<ValueTuple<Point, Tool>, Direction>(
+            var search = new DijkstraSearch<ValueTuple<Point, Tool>>(
                 EqualityComparer<(Point, Tool)>.Default,
                 Expander);
 
