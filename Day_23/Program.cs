@@ -5,84 +5,12 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Numerics;
-using C5;
+using System.Threading.Tasks;
 using Core;
 using MoreLinq;
 
 namespace Day_23
 {
-
-    public class Cube : IComparable<Cube>
-    {
-        public Point3 BottomLeft { get; set; }
-        public Point3 TopRight => BottomLeft.TranslateBy(SideLength, SideLength, SideLength);
-        public int SideLength { get; set; }
-        public IPriorityQueueHandle<Cube> Handle { get; set; } = null;
-
-        public int NanobotsInRange { get; set; } = 0;
-
-        public Cube(Point3 root, int side)
-        {
-            BottomLeft = root;
-            SideLength = side;
-        }
-
-        public int CompareTo(Cube other)
-        {
-            return NanobotsInRange.CompareTo(other.NanobotsInRange);
-        }
-
-        public Point3 Center => BottomLeft.TranslateBy(SideLength/2, SideLength/2, SideLength/2);
-
-        public IEnumerable<Point3> GetEdgePoints()
-        {
-            for (int x = BottomLeft.X; x < TopRight.X; x++)
-            {
-                yield return new Point3(x, BottomLeft.Y, BottomLeft.Z);
-                yield return new Point3(x, BottomLeft.Y, TopRight.Z - 1);
-                yield return new Point3(x, TopRight.Y - 1, BottomLeft.Z);
-                yield return new Point3(x, TopRight.Y - 1, TopRight.Z - 1);
-            }
-            for (int y = BottomLeft.Y; y < TopRight.Y; y++)
-            {
-                yield return new Point3(BottomLeft.X, y, BottomLeft.Z);
-                yield return new Point3(BottomLeft.X, y, TopRight.Z - 1);
-                yield return new Point3(TopRight.X - 1, y, BottomLeft.Z);
-                yield return new Point3(TopRight.X - 1, y, TopRight.Z - 1);
-            }
-            for (int z = BottomLeft.Z; z < TopRight.Z; z++)
-            {
-                yield return new Point3(BottomLeft.X, BottomLeft.Y, z);
-                yield return new Point3(BottomLeft.X, TopRight.Y - 1, z);
-                yield return new Point3(TopRight.X - 1, BottomLeft.Y, z);
-                yield return new Point3(TopRight.X - 1, TopRight.Y - 1, z);
-            }
-        }
-
-        internal static IEnumerable<Cube> Split(Cube c)
-        {
-            var halfSide = c.SideLength / 2;
-            var halfX = c.BottomLeft.X + halfSide;
-            var halfY = c.BottomLeft.Y + halfSide;
-            var halfZ = c.BottomLeft.Z + halfSide;
-
-            yield return new Cube(c.BottomLeft, c.SideLength / 2);
-            yield return new Cube(c.BottomLeft.TranslateBy(halfSide, 0, 0), c.SideLength / 2);
-            yield return new Cube(c.BottomLeft.TranslateBy(0, halfSide, 0), c.SideLength / 2);
-            yield return new Cube(c.BottomLeft.TranslateBy(0, 0, halfSide), c.SideLength / 2);
-            yield return new Cube(c.BottomLeft.TranslateBy(halfSide, halfSide, 0), c.SideLength / 2);
-            yield return new Cube(c.BottomLeft.TranslateBy(halfSide, 0, halfSide), c.SideLength / 2);
-            yield return new Cube(c.BottomLeft.TranslateBy(0, halfSide, halfSide), c.SideLength / 2);
-            yield return new Cube(c.BottomLeft.TranslateBy(halfSide, halfSide, halfSide), c.SideLength / 2);
-        }
-
-        public bool Contains (Point3 p)
-        {
-            return (p.X >= BottomLeft.X && p.X < TopRight.X)
-                && (p.Y >= BottomLeft.Y && p.Y < TopRight.Y)
-                && (p.Z >= BottomLeft.Z && p.Z < TopRight.Z);
-        }
-    }
 
     public class Nanobot
     {
@@ -131,6 +59,7 @@ namespace Day_23
             var side = 1 << 30;
             var initialQuad = new Cube(new Point3(minx, miny, minz), side);
 
+
             var prioQueue = new C5.IntervalHeap<Cube>();
 
             initialQuad.NanobotsInRange = nanobots.Count(b => IntersectCubeWithOctogon(initialQuad, b));
@@ -141,11 +70,11 @@ namespace Day_23
             while (true)
             {
                 var next = prioQueue.DeleteMax();
-                
+
                 if (next.SideLength == 1)
                 {
                     if (next.NanobotsInRange > seenmax)
-                    { 
+                    {
                         seenmax = next.NanobotsInRange;
                         maxPosition = next.BottomLeft;
                     }
@@ -154,10 +83,15 @@ namespace Day_23
                 }
 
                 var smallerCubes = Cube.Split(next);
+                _ = Parallel.ForEach(smallerCubes, cube =>
+                  {
+                      Console.WriteLine($"Sidelength: {cube.SideLength}");
+                      cube.NanobotsInRange = nanobots.Count(b => IntersectCubeWithOctogon(cube, b));
+                  });
                 foreach (var cube in smallerCubes)
                 {
-                    cube.NanobotsInRange = nanobots.Count(b => IntersectCubeWithOctogon(cube, b));
-                    prioQueue.Add(initialQuad);
+                    //cube.NanobotsInRange = nanobots.Count(b => IntersectCubeWithOctogon(cube, b));
+                    _ = prioQueue.Add(cube);
                 }
             }
 
@@ -188,7 +122,7 @@ namespace Day_23
                 {
                     if (coarsening > 1)
                     {
-                        return TranslateTowardsOrigin(currentPoint, 2*coarsening);
+                        return TranslateTowardsOrigin(currentPoint, 2 * coarsening);
                     }
                     return currentPoint;
                 }
@@ -230,7 +164,7 @@ namespace Day_23
             }
             if (dist < bot.Radius + halfLength)
             {
-                return false;
+                return true;
             }
             if (c.Contains(bot.Position))
             {
