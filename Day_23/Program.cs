@@ -83,14 +83,10 @@ namespace Day_23
                 }
 
                 var smallerCubes = Cube.Split(next);
-                _ = Parallel.ForEach(smallerCubes, cube =>
-                  {
-                      Console.WriteLine($"Sidelength: {cube.SideLength}");
-                      cube.NanobotsInRange = nanobots.Count(b => IntersectCubeWithOctogon(cube, b));
-                  });
+
                 foreach (var cube in smallerCubes)
                 {
-                    //cube.NanobotsInRange = nanobots.Count(b => IntersectCubeWithOctogon(cube, b));
+                    cube.NanobotsInRange = nanobots.Count(b => IntersectCubeWithOctogon(cube, b));
                     _ = prioQueue.Add(cube);
                 }
             }
@@ -98,9 +94,9 @@ namespace Day_23
             var bestReception = maxPosition;
             var bestscore = CalcNormalizedDistance(bestReception);
 
-            Console.WriteLine($"Part 2: Point {bestReception} has cost of {bestscore} :-)");
+            Console.WriteLine($"Part 2: Point with best reception is {bestReception} :-)");
             Console.WriteLine($"It is in Range of {CountNanobotsInRange(bestReception)} bots.");
-            Console.WriteLine($"Distance: {ManhattanDist3D(origin, maxPosition)}");
+            Console.WriteLine($"Distance from origin: {ManhattanDist3D(origin, maxPosition)}");
 
             sw.Stop();
             Console.WriteLine($"Solving took {sw.ElapsedMilliseconds}ms.");
@@ -170,9 +166,9 @@ namespace Day_23
             {
                 return true;
             }
-            foreach (var p in c.GetEdgePoints())
+            foreach (var edge in c.GetEdges())
             {
-                if (bot.IsPointInRange(p))
+                if (bot.IsPointInRange(edge.ClosestPointTo(bot.Position)))
                 {
                     return true;
                 }
