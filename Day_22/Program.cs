@@ -58,7 +58,7 @@ namespace Day_22
 
         private static int GetErosionLevelAt(Point p)
         {
-            return erosionLevelCache.GetOrAdd(p, () =>
+            return erosionLevelCache.GetOrAdd(p, _ =>
             {
                 int geoIndex = 0;
                 if (p == origin || p == target)
