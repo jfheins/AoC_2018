@@ -61,9 +61,10 @@ namespace Day_23
 
 
             var prioQueue = new C5.IntervalHeap<Cube>();
+            var nanoBotsPerCube = new Dictionary<Cube, int>();
 
-            initialQuad.NanobotsInRange = nanobots.Count(b => IntersectCubeWithOctogon(initialQuad, b));
-            prioQueue.Add(initialQuad);
+            nanoBotsPerCube[initialQuad] = nanobots.Count(b => IntersectCubeWithOctogon(initialQuad, b));
+            _ = prioQueue.Add(initialQuad);
 
             var seenmax = 0;
             var maxPosition = Point3.Empty;
@@ -73,9 +74,9 @@ namespace Day_23
 
                 if (next.SideLength == 1)
                 {
-                    if (next.NanobotsInRange > seenmax)
+                    if (nanoBotsPerCube[next] > seenmax)
                     {
-                        seenmax = next.NanobotsInRange;
+                        seenmax = nanoBotsPerCube[next];
                         maxPosition = next.BottomLeft;
                     }
                     else
@@ -86,7 +87,7 @@ namespace Day_23
 
                 foreach (var cube in smallerCubes)
                 {
-                    cube.NanobotsInRange = nanobots.Count(b => IntersectCubeWithOctogon(cube, b));
+                    nanoBotsPerCube[cube] = nanobots.Count(b => IntersectCubeWithOctogon(cube, b));
                     _ = prioQueue.Add(cube);
                 }
             }
