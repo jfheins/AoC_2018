@@ -60,8 +60,10 @@ namespace Day_23
             var initialQuad = new Cube(new Point3(minx, miny, minz), side);
 
 
-            var prioQueue = new C5.IntervalHeap<Cube>();
             var nanoBotsPerCube = new Dictionary<Cube, int>();
+            var prioQueue = new C5.IntervalHeap<Cube>(Comparer<Cube>.Create(
+                (c1, c2) => nanoBotsPerCube[c1].CompareTo(nanoBotsPerCube[c2]))
+                );
 
             nanoBotsPerCube[initialQuad] = nanobots.Count(b => IntersectCubeWithOctogon(initialQuad, b));
             _ = prioQueue.Add(initialQuad);
@@ -84,7 +86,6 @@ namespace Day_23
                 }
 
                 var smallerCubes = Cube.Split(next);
-
                 foreach (var cube in smallerCubes)
                 {
                     nanoBotsPerCube[cube] = nanobots.Count(b => IntersectCubeWithOctogon(cube, b));
